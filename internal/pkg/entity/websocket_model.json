@@ -1,0 +1,193 @@
+// SEEN MESSAGE 
+
+{
+	"status" : 1,
+	"body"  : {
+		"message_number":"",
+		"friend_id":""
+	}
+}
+
+// TYPING MESSAGE 
+{
+	"status" : 2,
+	"body" :{
+		"typer_id":"",
+		"receiver_id":""
+	}
+}
+
+// STOP TYPING MESSAGE 
+{
+	"status" : 3,
+	"body" :{
+		"typer_id":"",
+		"receiver_id":""
+	}
+}
+
+// IndividualMessage 
+
+// INPUT 
+{
+ "status" : 4,
+ "body" : {
+	"receiver_id" : "5fda155862c37cba63d5cba2",
+	"text" : "this is the message "
+ }
+}
+
+// OUTPUT
+{
+	"status" : 4,
+	"body" : {
+		"id":"",
+		"sender_id":"",
+		"receiver_id":"",
+		"text":"",
+		"time":"0001-01-01T00:00:00Z",
+		"seen":false,
+		"sent":false,
+		"seen_confirmed":false,
+		"message_number":0
+	}
+}
+
+// GroupMessage 
+
+// INPUT 
+{
+	"status" : 5 ,
+	"body" : {
+		"group_id":"",
+		"sender_id":0,
+		"text" :
+	}
+}
+// OUTPUT 
+{
+	"status" : 5,
+	"body" : {
+		"id":"",
+		"group_id":"",
+		"sender_id":0,
+		"message_number":0,
+		"text":"",
+		"time" : ""
+	}
+}
+
+//Alie Profile  Change 
+{
+	"status" : 6,
+	"body" : {
+		"id":"",
+		"username":"",
+		"password":"",
+		"imageurl":"",
+		"bio":"",
+		"email":"",
+		"last_seen":"0001-01-01T00:00:00Z",
+		"last_updated":"0001-01-01T00:00:00Z",
+		"my_groups":[
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			
+		]
+	}
+}
+
+// Group Profile Change 
+{
+	"status" : 7,
+	"body" : {
+		"owner_id":"",
+		"members_count":0,
+		"imageurl":"",
+		"active_counts":0,
+		"group_name":"",
+		"description":"",
+		"last_message_number":0,
+		"members_id":null,
+		"created_at":"0001-01-01T00:00:00Z",
+		"messages":null
+	}
+}
+
+// NewAlie 
+{
+	"status" : 8,
+	"body" :{
+		"id":"",
+		"username":"",
+		"password":"",
+		"imageurl":"",
+		"bio":"",
+		"email":"",
+		"last_seen":"0001-01-01T00:00:00Z",
+		"last_updated":"0001-01-01T00:00:00Z",
+		"my_groups":[
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			"5fda155862c37cba63d5cba2",
+			
+		]
+	}
+	
+}
+
+// Group Join Message 
+{
+	"status" : 9,
+	"body" : {
+		"user":{
+			"id":"",
+			"username":"",
+			"password":"",
+			"imageurl":"",
+			"bio":"",
+			"email":"",
+			"last_seen":"0001-01-01T00:00:00Z",
+			"last_updated":"0001-01-01T00:00:00Z",
+			"my_groups":[
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				
+			]
+		},
+		"group_id":""
+	}
+}
+
+// Group Leave Message 
+{
+	"status" : 10,
+	"body" : {
+		"user":{
+			"id":"",
+			"username":"",
+			"password":"",
+			"imageurl":"",
+			"bio":"",
+			"email":"",
+			"last_seen":"0001-01-01T00:00:00Z",
+			"last_updated":"0001-01-01T00:00:00Z",
+			"my_groups":[
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+			]
+		},
+		"group_id":"5fda155862c37cba63d5cba2"
+	}
+}

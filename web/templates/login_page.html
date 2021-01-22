@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html  >
+<head>
+  <!-- Site made with Mobirise Website Builder v5.2.0, https://mobirise.com -->
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Mobirise v5.2.0, mobirise.com">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <link rel="shortcut icon" href="{{.HOST}}assets/images/favicon.ico" type="image/x-icon">
+  <meta name="description" content="">
+  <title>ስለ መድሀኒት | About Medicine </title>
+  <link rel="stylesheet" href="assets/tether/tether.min.css">
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap-grid.min.css">
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap-reboot.min.css">
+  <link rel="stylesheet" href="assets/dropdown/css/style.css">
+  <link rel="stylesheet" href="assets/socicon/css/styles.css">
+  <link rel="stylesheet" href="assets/theme/css/style.css">
+  <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css"><link rel="stylesheet" href="{{.HOST}}assets/mobirise/css/mbr-additional.css" type="text/css">
+  <script src="js/axios.min.js"></script>
+
+ <script>
+
+    function login(){
+
+        var usernameEntry = document.getElementById("username");
+        var passwordEntry = document.getElementById("password");
+        var theUsername = usernameEntry.value;
+        var thePassword = passwordEntry.value;
+
+        console.log("running the method ");
+        axios(
+            {
+                method:"post" , 
+                url:"/api/login" , 
+                responseType : "application/json" , 
+                data : {
+                    username:theUsername  , 
+                    password : thePassword , 
+                }
+            }
+        ).then( function(response){
+            var value = response.data;
+            console.log(value);
+            var messageShow = document.getElementById("message");
+            messageShow.innerText=  value["message"];
+            console.log(value.message);
+            if(value.success){
+                messageShow.style.color="#00ff00";
+                var val = document.getElementById("clickMe").click();
+            }else {
+                messageShow.style.color="#ff0000";
+            }
+        })
+    }
+  </script>
+</head>
+<body>
+  <section class="menu menu1 cid-sgUDmqDg7i" once="menu" id="menu1-4">
+    <nav class="navbar navbar-dropdown navbar-fixed-top navbar-expand-lg">
+        <div class="container">
+            <div class="navbar-brand">
+                <span class="navbar-caption-wrap"><a class="navbar-caption text-black text-primary display-7" href="index.html">ስለ መድሀኒት<br>About Medicine </a></span>
+            </div>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </button>
+        </div>
+    </nav>
+</section>
+<section class="form4 cid-sgUHTfLVgc mbr-fullscreen" id="form4-7">
+    <div class="container">
+        <div class="row content-wrapper justify-content-center">
+            <div class="col-lg-3 offset-lg-1 mbr-form" data-form-type="formoid">
+                <a id="clickMe" href="{{.HOST}}profile"></a>
+                <!-- <form action="https://mobirise.eu/" method="POST" class="mbr-form form-with-styler" data-form-title="Form Name"> -->
+                    <input type="hidden" name="email" data-form-email="true" value="RR4Fb9qL7FrjDJHyPDxdUR3qWah/1sLO+C5bxglgYSXnIYkNbnkRGG1BhoOfPtLb9k5bXstpOLTxebjpeBqk3esUWF7Xd/8B7fyV1Bjfn5/lEIBEcV4OVZOGATZXv0XD">
+                    <div class="">
+                        <div hidden="hidden" data-form-alert="" class="alert alert-success col-12">Thanks for filling
+                            out the form!</div>
+                        <div hidden="hidden" data-form-alert-danger="" class="alert alert-danger col-12">Oops...! some
+                            problem!</div>
+                    </div>
+                    <div class="dragArea row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <h1 class="mbr-section-title mb-4 display-2"><strong>{{ Tran .Lang "login"}}</strong></h1>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <p class="mbr-text mbr-fonts-style mb-4 display-7"></p>
+                        </div>
+                        <div class="col-lg-12 col-md col-12 form-group" data-for="name">
+                            <p id="message"  style="font-style:italic;font-weight:bold;" ></p>
+                        </div>
+                        <div class="col-lg-12 col-md col-12 form-group" data-for="name">
+                            <input type="text" name="name" placeholder="{{ Tran .Lang `Name` }}" data-form-field="name" class="form-control" value="" id="username">
+                        </div>
+                        <div class="col-lg-12 col-md col-12 form-group" data-for="email">
+                            <input type="password" name="password" placeholder="{{ Tran .Lang `Password` }}" data-form-field="email" class="form-control" value="" id="password">
+                        </div>
+                        <div class="col-12 col-md-auto mbr-section-btn   "> 
+                            <button onclick="login()"   class="btn btn-primary display-4"  >
+                                {{ Tran .Lang "Login" }}
+                            </button>
+                        </div>
+                    </div>
+                <!-- </form> -->
+            </div>
+            <div class="col-lg-7 offset-lg-1 col-12">
+                <div class="image-wrapper">
+                    <img class="w-100" src="{{.HOST}}assets/images/619974.jpg" alt="Mobirise">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="footer1 cid-sgUDqERtMQ" once="footers" id="footer1-5">
+
+    
+    
+    <div class="container">
+        <div class="row mbr-white">
+            <div class="col-12 col-md-6 col-lg-3">
+                <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
+                    <strong>Mobirise Help</strong>
+                </h5>
+                <ul class="list mbr-fonts-style display-4">
+                    <li class="mbr-text item-wrap">Help Center</li>
+                    <li class="mbr-text item-wrap">Mobirise Forums</li>
+                    <li class="mbr-text item-wrap">Mobirise Kit</li>
+                    <li class="mbr-text item-wrap">Our site</li>
+                </ul>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
+                    <strong>Themes</strong>
+                </h5>
+                <ul class="list mbr-fonts-style display-4">
+
+                    <li class="mbr-text item-wrap">Mobirise 5</li>
+                    <li class="mbr-text item-wrap">Mobirise AMP</li>
+                    <li class="mbr-text item-wrap">Mobirise Kit</li>
+                </ul>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
+                    <strong>Extensions</strong>
+                </h5>
+                <ul class="list mbr-fonts-style display-4">
+                    <li class="mbr-text item-wrap">Code Editor</li>
+                    <li class="mbr-text item-wrap">Form Builder</li>
+                    <li class="mbr-text item-wrap">Popup Builder</li>
+                    <li class="mbr-text item-wrap">Enterprise</li>
+                </ul>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
+                    <strong>About</strong>
+                </h5>
+                <p class="mbr-text mbr-fonts-style mb-4 display-4">
+                    Mobirise is a free offline app for
+                    Windows and Mac to easily create small/medium websites, landing pages, online resumes and
+                    portfolios.</p>
+                <h5 class="mbr-section-subtitle mbr-fonts-style mb-3 display-7">
+                    <strong>Social</strong>
+                </h5>
+                <div class="social-row display-7">
+                    <div class="soc-item">
+                        <a href="https://twitter.com/mobirise" target="_blank">
+                            <span class="mbr-iconfont socicon socicon-facebook"></span>
+                        </a>
+                    </div>
+                    <div class="soc-item">
+                        <a href="https://twitter.com/mobirise" target="_blank">
+                            <span class="mbr-iconfont socicon socicon-twitter"></span>
+                        </a>
+                    </div>
+                    <div class="soc-item">
+                        <a href="https://twitter.com/mobirise" target="_blank">
+                            <span class="mbr-iconfont socicon socicon-instagram"></span>
+                        </a>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+<section style="background-color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; color:#aaa; font-size:12px; padding: 0; align-items: center; display: flex;">
+    <a href="https://mobirise.site/v" style="flex: 1 1; height: 3rem; padding-left: 1rem;">
+    </a>
+    <p style="flex: 0 0 auto; margin:0; padding-right:1rem;">
+    <a href="https://mobirise.site/q" style="color:#aaa;">
+        This web page
+    </a> 
+    was made with Mobirise themes 
+    </p>
+</section>
+<script src="assets/web/assets/jquery/jquery.min.js">
+</script>  
+<script src="assets/popper/popper.min.js">
+</script>  
+<script src="assets/tether/tether.min.js"></script>  
+<script src="assets/bootstrap/js/bootstrap.min.js">
+</script>  
+<script src="assets/smoothscroll/smooth-scroll.js">
+</script>  
+<script src="assets/dropdown/js/nav-dropdown.js">
+</script>  
+<script src="assets/dropdown/js/navbar-dropdown.js">
+</script>  
+<script src="assets/touchswipe/jquery.touch-swipe.min.js">
+</script>  
+<script src="assets/theme/js/script.js">
+</script>  
+<script src="assets/formoid/formoid.min.js">
+</script>  
+  
+  
+</body>
+</html>

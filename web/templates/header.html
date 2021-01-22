@@ -1,0 +1,81 @@
+
+{{define "main-header" }}
+    <!-- Header Section Begin -->
+    <script>
+        var HOST = window.location.href;
+        function ChangeLanguage(  ){
+            var element = document.getElementById("lang-select").value;
+            console.log("Requesting...........");
+            axios.get(
+                "/lang/new/" ,
+               {
+                   params : {
+                       lang : element
+                   }
+               }
+            ).then(function(response ){
+                var data = response.data;
+                console.log("responding .... ");
+                if(data.success){
+                    var en = document.createElement("a");
+                    en.setAttribute("href" ,HOST );
+                    var elo=document.getElementById("link-add");
+                    elo.append(en);
+                    element.value=data.lang;
+                    en.click();
+                    console.log("success");
+                    return;
+                }
+            });
+
+        }
+    </script>
+    <div style="background-color:   #069 ; color: #fff;" class="hs-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-2">
+                    <div class="logo">
+                    </div>
+    
+                </div>
+                <div class="col-lg-5" style="margin-top: 30px;">
+                        <h4><i> <strong> <h2> ስለ መድሀኒት </h2></strong></i></h4>
+                        <h5> <strong><h2>   About Medicine </h2></strong></h5>
+                </div>
+                <div class="col-lg-5">
+                    <div class="ht-widget">
+                        {{$Lang := "eng"}}
+                        
+
+                        {{with .Lang }}
+                            {{$Lang := . }}
+                        {{end}}
+                        
+                        {{with .Admin}}
+                        <a  href="/profile"  class="user_little_info"    >
+                            <img class="img-circle" style=" max-width: 90px ;max-height: 90px;font-weight: bold;font-style: italic;border-radius: 50%;border: solid #111111 1px;" src="{{$HOST}}{{.Imgurl}}" alt="{{ Tran $Lang `The` }} {{.Username }} {{ Tran $Lang `Profile Image`}}">
+                        </a>
+                        {{end}}
+                        <br>
+                        {{if .Admin }}
+                            <a onclick="Logout(/)" class="hw-btn">{{Tran .Lang "logout"}}</a>
+                        {{else }}
+                            <a href="login" class="hw-btn">{{Tran .Lang "login"}}</a>
+                        {{end}}
+                        <select name="lang"  id="lang-select" onchange="ChangeLanguage()">
+                            {{ range .Languages }}
+                                <option value="{{.}}">
+                                    {{.}}
+                                </option>
+                            {{end}}
+
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-open">
+                <span class="icon_menu"></span>
+            </div>
+        </div>
+    </div>
+	{{end}}

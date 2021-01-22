@@ -1,0 +1,71 @@
+.styledButton{
+    padding : 20px;
+    margin: 7px;
+    background-color: #00C89E;
+    color: white;
+    font-weight: bolder;
+    border-radius: 20px;
+}
+.styledButton :hover {
+    background-color : white;
+    color: #00C89E;
+    border-color: #00C89E;
+    transition-delay: 1000ms;
+}
+.categoryItem{
+    padding: 10px;
+    background-color:#00C89E;
+    color: white;
+    margin: 20px;
+    border-radius: 20px;
+    box-shadow: 10px 10px 10px ;
+    text-align: center;
+}
+.categoryItem:hover{
+    transition-delay: 1000ms;
+    color: #00C89E;
+    background-color: white;
+
+}
+.lecturestable table{
+    background-attachment: fixed;
+    margin-bottom: 30px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+    width: auto;
+    background-color: #4CAF50;
+    color: white;
+}
+input{
+    padding: 10px;
+    margin: 15px;
+}
+select{
+    padding: 10px;
+    margin: 15px;
+    display:  block;
+
+}
+.active_round{
+    background-color: #00C89E;
+    color: white;
+}
+.active_round:hover{
+    background-color: white;
+    color: #00C89E;
+    box-shadow: 5px 5px 5px;
+
+}
