@@ -29,7 +29,8 @@ func (im *InMess) GetBody() interface{} {
 // SeenBody struct representing the body of seen message 
 type SeenBody struct {
 	MessageNumber string `json:"message_number"`
-	FriendID string `json:"friend_id"`
+	SenderID string `json:"sender_id"`
+	ObserverID string `json:"observer_id"`
 }
 
 // SeenMessage struct 
@@ -115,8 +116,7 @@ func (gmm *GMMessage) GetBody() interface{} {
 
 // ----------------------------------------------------
 
-// -------------------___Alie Profile Change 6    and    New Alie 8    ----------------
-
+// ------------------- Alie Profile Change 6 and 7 New Alie 8    ----------------
 // AlieProfile struct 
 type AlieProfile struct {
 	Status int `json:"status"`
@@ -132,9 +132,21 @@ func (ap *AlieProfile) GetBody() interface{} {
 	return ap.Body
 }
 
+//----------------- NewAlieBody --------7 ---------------
+type NewAlieBody struct {
+	ReceiverID string `json:"receiver_id"`
+	User *User `json:"user"`
+}
+
+// NewAlie struct representing main body of new alie message
+type NewAlie struct {
+	Status int `json:"status"`
+	Body NewAlieBody  `json:"body"`
+}
+
 // ----------------------------------------------------
 
-// --------------------------Group Profile Change 7 -------------
+// --------------------------Group Profile Change 9 -------------
 
 // GroupProfile struct representing group profile changes 
 type GroupProfile struct{
@@ -152,7 +164,7 @@ func (gp *GroupProfile) GetBody() interface{} {
 
 // -----------------------------------------------------------
 
-// ---------------- Group Join 9   and Group Leave  10  Messages ------------
+// ---------------- Group Join 10 and Group Leave  11  Messages ------------
 
 // JoinLeaveBody struct 
 // Status Number 9 and 10
@@ -176,11 +188,7 @@ func (jlm *JoinLeaveMessage ) GetStatus()int {
 func (jlm *JoinLeaveMessage) GetBody() interface{} {
 	return jlm.Body
 }
-
-
 // -----------------------------------------------
-
-
 
 // EEMBinary struct representing an end to end message  
 // that can be passed to the Main Service EEMEssage 
@@ -189,7 +197,6 @@ type EEMBinary struct {
 	UserID string 
 	Data []byte
 }
-
 
 // GMMBinary representing Group message that can be passed to MainService 
 // this will serve as a channel 

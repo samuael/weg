@@ -3,8 +3,9 @@
 {
 	"status" : 1,
 	"body"  : {
-		"message_number":"",
-		"friend_id":""
+		"message_number": 0,
+		"sender_id":"5fda155862c37cba63d5cba2" , 
+		"observer_id" : "5fda155862c37cba63d5cba2"
 	}
 }
 
@@ -96,13 +97,43 @@
 			"5fda155862c37cba63d5cba2",
 			"5fda155862c37cba63d5cba2",
 			
-		]
+		] , 
+		"my_alies" : []
 	}
 }
 
+// NewAlie status 7
+{
+	"status" : 7 , 
+	"body" : {
+		"receiver_id" : "5fda155862c37cba63d5cba2" , 
+		"user" : {
+			"id":"",
+			"username":"",
+			"password":"",
+			"imageurl":"",
+			"bio":"",
+			"email":"",
+			"last_seen":"0001-01-01T00:00:00Z",
+			"last_updated":"0001-01-01T00:00:00Z",
+			"my_groups":[
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				"5fda155862c37cba63d5cba2",
+				
+			] , 
+			"my_alies" : []
+		}
+	}
+}
+
+
+
 // Group Profile Change 
 {
-	"status" : 7,
+	"status" : 8,
 	"body" : {
 		"owner_id":"",
 		"members_count":0,
@@ -117,29 +148,29 @@
 	}
 }
 
-// NewAlie 
-{
-	"status" : 8,
-	"body" :{
-		"id":"",
-		"username":"",
-		"password":"",
-		"imageurl":"",
-		"bio":"",
-		"email":"",
-		"last_seen":"0001-01-01T00:00:00Z",
-		"last_updated":"0001-01-01T00:00:00Z",
-		"my_groups":[
-			"5fda155862c37cba63d5cba2",
-			"5fda155862c37cba63d5cba2",
-			"5fda155862c37cba63d5cba2",
-			"5fda155862c37cba63d5cba2",
-			"5fda155862c37cba63d5cba2",
+// // NewAlie 
+// {
+// 	"status" : 8,
+// 	"body" :{
+// 		"id":"",
+// 		"username":"",
+// 		"password":"",
+// 		"imageurl":"",
+// 		"bio":"",
+// 		"email":"",
+// 		"last_seen":"0001-01-01T00:00:00Z",
+// 		"last_updated":"0001-01-01T00:00:00Z",
+// 		"my_groups":[
+// 			"5fda155862c37cba63d5cba2",
+// 			"5fda155862c37cba63d5cba2",
+// 			"5fda155862c37cba63d5cba2",
+// 			"5fda155862c37cba63d5cba2",
+// 			"5fda155862c37cba63d5cba2",
 			
-		]
-	}
+// 		]
+// 	}
 	
-}
+// }
 
 // Group Join Message 
 {
@@ -190,4 +221,17 @@
 		},
 		"group_id":"5fda155862c37cba63d5cba2"
 	}
+}
+
+
+
+// Active Friends 12
+{
+	"status" : 13 , 
+	"receiver_id" : "5fda155862c37cba63d5cba2"  ,
+	"active_friends" : [
+		"5fda155862c37cba63d5cba2",
+		"5fda155862c37cba63d5cba2", 
+		"5fda155862c37cba63d5cba2"
+	]
 }
