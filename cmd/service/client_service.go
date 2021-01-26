@@ -14,9 +14,8 @@ import (
 // ClientService struct handling end to end messages and
 // assembling them
 type ClientService struct {
-	MainService *MainService
-	Message     chan entity.XMessage
-
+	MainService    *MainService
+	Message        chan entity.XMessage
 	UserSer        User.UserService
 	GroupSer       Group.GroupService
 	GroupService   GroupService
@@ -63,7 +62,7 @@ func (clienservice *ClientService) ServeHTTP(response http.ResponseWriter, reque
 		ClientService:  clienservice,
 		Conn:           conn,
 		ID:             user.ID,
-		Message:        make(chan entity.XMessage),
+		Message:        make(chan entity.EEMBinary),
 		SessionHandler: clienservice.SessionHandler,
 		User:           user,
 	}

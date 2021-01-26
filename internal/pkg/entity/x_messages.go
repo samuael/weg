@@ -1,5 +1,9 @@
 package entity
 
+// structs and methods in this class are to be used int the
+// exchange messages and this data formats will be simmilar to that of
+// messages to be sent in the websocket channel
+
 // XMessage interface representing exchangable messages that have status
 // and Method Named(  GetStatus() int  )
 type XMessage interface {
@@ -36,8 +40,9 @@ type SeenBody struct {
 
 // SeenMessage struct
 type SeenMessage struct {
-	Status int      `json:"status"`
-	Body   SeenBody `json:"body"`
+	Status   int      `json:"status"`
+	Body     SeenBody `json:"body"`
+	SenderID string   `json:"-"`
 }
 
 // GetStatus implementing XMessage
@@ -48,6 +53,11 @@ func (sm *SeenMessage) GetStatus() int {
 // GetBody function
 func (sm *SeenMessage) GetBody() interface{} {
 	return sm.Body
+}
+
+// GetSenderID function
+func (sm *SeenMessage) GetSenderID() string {
+	return sm.SenderID
 }
 
 // ---------------------------------------------------------
@@ -62,8 +72,9 @@ type TypingBody struct {
 
 // TypingMessage struct
 type TypingMessage struct {
-	Status int        `json:"status"`
-	Body   TypingBody `json:"body"`
+	Status   int        `json:"status"`
+	Body     TypingBody `json:"body"`
+	SenderID string     `json:"-"`
 }
 
 // GetStatus function
@@ -76,14 +87,20 @@ func (tm *TypingMessage) GetBody() interface{} {
 	return tm.Body
 }
 
+// GetSenderID function
+func (tm *TypingMessage) GetSenderID() string {
+	return tm.SenderID
+}
+
 // -------------------------------------------------
 
 // --------------------EndToEndMessage 4 ---------------------------
 
 // EEMessage struct representing individual message
 type EEMessage struct {
-	Status int     `json:"status"`
-	Body   Message `json:"body"`
+	Status   int     `json:"status"`
+	Body     Message `json:"body"`
+	SenderID string  `json:"-"`
 }
 
 // GetStatus implementing the XMessage interface
@@ -96,14 +113,20 @@ func (eem *EEMessage) GetBody() interface{} {
 	return eem.Body
 }
 
+// GetSenderID function
+func (eem *EEMessage) GetSenderID() string {
+	return eem.SenderID
+}
+
 // ---------------------------------------
 
 // --------------------- Group Message 5 --------------------
 
 // GMMessage struct representting Group Message
 type GMMessage struct {
-	Status int          `json:"status"`
-	Body   GroupMessage `json:"body"`
+	Status   int          `json:"status"`
+	Body     GroupMessage `json:"body"`
+	SenderID string       `json:"-"`
 }
 
 // GetStatus function
@@ -116,13 +139,20 @@ func (gmm *GMMessage) GetBody() interface{} {
 	return gmm.Body
 }
 
+// GetSenderID function
+func (gmm *GMMessage) GetSenderID() string {
+	return gmm.SenderID
+}
+
 // ----------------------------------------------------
 
 // ------------------- Alie Profile Change 6 and 7 New Alie 8    ----------------
+
 // AlieProfile struct
 type AlieProfile struct {
-	Status int  `json:"status"`
-	Body   User `json:"body"`
+	Status   int    `json:"status"`
+	Body     User   `json:"body"`
+	SenderID string `json:"-"`
 }
 
 // GetStatus representing alie Profile
@@ -135,7 +165,14 @@ func (ap *AlieProfile) GetBody() interface{} {
 	return ap.Body
 }
 
+// GetSenderID function
+func (ap *AlieProfile) GetSenderID() string {
+	return ap.SenderID
+}
+
 //----------------- NewAlieBody --------7 ---------------
+
+// NewAlieBody struct
 type NewAlieBody struct {
 	ReceiverID string `json:"receiver_id"`
 	User       *User  `json:"user"`
@@ -143,8 +180,24 @@ type NewAlieBody struct {
 
 // NewAlie struct representing main body of new alie message
 type NewAlie struct {
-	Status int         `json:"status"`
-	Body   NewAlieBody `json:"body"`
+	Status   int         `json:"status"`
+	Body     NewAlieBody `json:"body"`
+	SenderID string      `json:"-"`
+}
+
+// GetStatus func
+func (nal *NewAlie) GetStatus() int {
+	return nal.Status
+}
+
+// GetBody function
+func (nal *NewAlie) GetBody() interface{} {
+	return nal.Body
+}
+
+// GetSenderID function
+func (nal *NewAlie) GetSenderID() string {
+	return nal.SenderID
 }
 
 // ----------------------------------------------------
@@ -153,8 +206,9 @@ type NewAlie struct {
 
 // GroupProfile struct representing group profile changes
 type GroupProfile struct {
-	Status int   `json:"status"`
-	Body   Group `json:"body"`
+	Status   int    `json:"status"`
+	Body     Group  `json:"body"`
+	SenderID string `json:"-"`
 }
 
 // GetStatus func
@@ -165,6 +219,11 @@ func (gp *GroupProfile) GetStatus() int {
 // GetBody function
 func (gp *GroupProfile) GetBody() interface{} {
 	return gp.Body
+}
+
+// GetSenderID function
+func (gp *GroupProfile) GetSenderID() string {
+	return gp.SenderID
 }
 
 // -----------------------------------------------------------
@@ -180,8 +239,9 @@ type JoinLeaveBody struct {
 
 // JoinLeaveMessage struct
 type JoinLeaveMessage struct {
-	Status int           `json:"status"`
-	Body   JoinLeaveBody `json:"body"`
+	Status   int           `json:"status"`
+	Body     JoinLeaveBody `json:"body"`
+	SenderID string        `json:"-"`
 }
 
 // GetStatus struct
@@ -193,6 +253,11 @@ func (jlm *JoinLeaveMessage) GetStatus() int {
 // GetBody function
 func (jlm *JoinLeaveMessage) GetBody() interface{} {
 	return jlm.Body
+}
+
+// GetSenderID function
+func (jlm *JoinLeaveMessage) GetSenderID() string {
+	return jlm.SenderID
 }
 
 // -----------------------------------------------
