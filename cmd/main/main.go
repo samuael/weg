@@ -41,6 +41,7 @@ var sessionHandler *session.Cookiehandler
 
 // var studentHandler *handler.StudentHandler
 
+// For Filtering and Preventing Directory Listening...
 func neuter(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/") {
@@ -56,20 +57,20 @@ func startUp() {
 			if db == nil {
 				os.Exit(1)
 			}
-			return 
-			//Instanciating Templates nigga 
+			return
+			//Instanciating Templates nigga
 			// systemTemplate = (template.Must(template.New("Weg").Funcs(handler.FuncMap).ParseGlob("../../web/templates/*.html")))
 		},
 	)
 }
 
-func init(){
+func init() {
 	startUp()
 }
 
 func main() {
 
-	if db== nil {
+	if db == nil {
 		fmt.Println("DB IS Nill ")
 		os.Exit(1)
 	}
@@ -84,63 +85,55 @@ func main() {
 
 	grouprepo := GroupRepo.NewGroupRepo(db)
 	gservice := GroupService.NewGroupService(grouprepo)
-	inmsRepo := MessageRepo.NewMessageRepo(db , alierepo )
+	inmsRepo := MessageRepo.NewMessageRepo(db, alierepo)
 	messageSer := MessageService.NewMessageService(inmsRepo)
 
-	aliehandler := apiHandler.NewAliesHandler(sessionHandler , alieSer  ,userser )
-	userhandler := apiHandler.NewUserHandler(sessionHandler , userser )
-	grouphandler := apiHandler.NewGroupHandler(sessionHandler , gservice , userser )
-	inmshandler := apiHandler.NewIndvMessageHandler(sessionHandler ,messageSer , userser , alieSer )
-	gmhandler := apiHandler.NewGroupMessageHandler(gservice , userser , sessionHandler , messageSer)
+	aliehandler := apiHandler.NewAliesHandler(sessionHandler, alieSer, userser)
+	userhandler := apiHandler.NewUserHandler(sessionHandler, userser)
+	grouphandler := apiHandler.NewGroupHandler(sessionHandler, gservice, userser)
+	inmshandler := apiHandler.NewIndvMessageHandler(sessionHandler, messageSer, userser, alieSer)
+	gmhandler := apiHandler.NewGroupMessageHandler(gservice, userser, sessionHandler, messageSer)
 
 	mux := mux.NewRouter() //.StrictSlash(true)
 	fs := http.FileServer(http.Dir("../../web/templates/assets/"))
 	mux.Handle("/assets/", http.StripPrefix("/assets/", neuter(fs)))
 
-
 	apiroute := mux.PathPrefix("/api/").Subrouter()
 
-	apiroute.HandleFunc( "/user/new/"  ,userhandler.RegisterClient).Methods(http.MethodPost)
-	apiroute.HandleFunc("/user/login/" ,  userhandler.Login).Methods(http.MethodPost)
-	
-	apiroute.HandleFunc("/logout"  , userhandler.Authenticated(userhandler.Logout)).Methods("GET")  
-	apiroute.HandleFunc("/user/img/"  , userhandler.Authenticated(userhandler.UploadProfilePic)).Methods(http.MethodPut)
-	apiroute.HandleFunc("/lang/new/" , userhandler.Authenticated(userhandler.ChangeLanguage)).Methods(http.MethodGet)
-	apiroute.HandleFunc("/user/"  , userhandler.Authenticated( userhandler.UpdateUserProfile )).Methods(http.MethodPut)
-	apiroute.HandleFunc("/user/password/new/"  , userhandler.Authenticated( userhandler.ChangeUserPassword )).Methods(http.MethodPut)
-	
+	apiroute.HandleFunc("/user/new/", userhandler.RegisterClient).Methods(http.MethodPost)
+	apiroute.HandleFunc("/user/login/", userhandler.Login).Methods(http.MethodPost)
+
+	apiroute.HandleFunc("/logout", userhandler.Authenticated(userhandler.Logout)).Methods("GET")
+	apiroute.HandleFunc("/user/img/", userhandler.Authenticated(userhandler.UploadProfilePic)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/lang/new/", userhandler.Authenticated(userhandler.ChangeLanguage)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.UpdateUserProfile)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/user/password/new/", userhandler.Authenticated(userhandler.ChangeUserPassword)).Methods(http.MethodPut)
 
 	// GetGroupMembersList
-	apiroute.HandleFunc("/group/new/"  , userhandler.Authenticated( grouphandler.CreateGroup )).Methods(http.MethodPost)
-	apiroute.HandleFunc("/group/"  , userhandler.Authenticated( grouphandler.DeleteGroup )).Methods(http.MethodDelete)
-	apiroute.HandleFunc("/group/img/"  , userhandler.Authenticated(grouphandler.UpdateGroupProfilePicture)).Methods(http.MethodPut)
-	apiroute.HandleFunc("/group/join/"  , userhandler.Authenticated(grouphandler.JoinGroup)).Methods(http.MethodPut)
-	apiroute.HandleFunc("/group/leave/"  , userhandler.Authenticated(grouphandler.LeaveGroup)).Methods(http.MethodPut)
-	apiroute.HandleFunc("/groups/"  , userhandler.Authenticated(grouphandler.MyGroups)).Methods(http.MethodGet)
-	apiroute.HandleFunc("/group/search/"  , userhandler.Authenticated(grouphandler.SearchGroupByName)).Methods(http.MethodGet)
-	apiroute.HandleFunc("/group/members/"  , userhandler.Authenticated(grouphandler.GetGroupMembersList)).Methods(http.MethodGet)
-	
+	apiroute.HandleFunc("/group/new/", userhandler.Authenticated(grouphandler.CreateGroup)).Methods(http.MethodPost)
+	apiroute.HandleFunc("/group/", userhandler.Authenticated(grouphandler.DeleteGroup)).Methods(http.MethodDelete)
+	apiroute.HandleFunc("/group/img/", userhandler.Authenticated(grouphandler.UpdateGroupProfilePicture)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/group/join/", userhandler.Authenticated(grouphandler.JoinGroup)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/group/leave/", userhandler.Authenticated(grouphandler.LeaveGroup)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/groups/", userhandler.Authenticated(grouphandler.MyGroups)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/group/search/", userhandler.Authenticated(grouphandler.SearchGroupByName)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/group/members/", userhandler.Authenticated(grouphandler.GetGroupMembersList)).Methods(http.MethodGet)
 
-	// AlieRelated Routed    
-	apiroute.HandleFunc("/user/friends/" , userhandler.Authenticated(aliehandler.GetListOfAlies )).Methods(http.MethodGet)
-	apiroute.HandleFunc("/user/friend/" ,  userhandler.Authenticated(aliehandler.DeleteAlie )).Methods(http.MethodDelete)
+	// AlieRelated Routed
+	apiroute.HandleFunc("/user/friends/", userhandler.Authenticated(aliehandler.GetListOfAlies)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/user/friend/", userhandler.Authenticated(aliehandler.DeleteAlie)).Methods(http.MethodDelete)
 
+	// Message Related Routes that are not Websocket Dependant
+	apiroute.HandleFunc("/user/friend/messages/", userhandler.Authenticated(inmshandler.OurEndToEndMessage)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/group/messages/", userhandler.Authenticated(gmhandler.GetGroupMessage)).Methods(http.MethodGet)
 
+	// Temp Routes    that could be changed to websocket implemmentaation
+	apiroute.HandleFunc("/user/message/new/", userhandler.Authenticated(inmshandler.SendAlieMessage)).Methods(http.MethodPost)
+	apiroute.HandleFunc("/user/message/seen/", userhandler.Authenticated(inmshandler.SetTheMessageSeen)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/group/message/new/", userhandler.Authenticated(gmhandler.SendGroupMessage)).Methods(http.MethodPost)
 
-	// Message Related Routes that are not Websocket Dependant   
-	apiroute.HandleFunc("/user/friend/messages/"  , userhandler.Authenticated(inmshandler.OurEndToEndMessage )).Methods(http.MethodGet)
-	apiroute.HandleFunc("/group/messages/"  , userhandler.Authenticated(gmhandler.GetGroupMessage )).Methods(http.MethodGet)
-
-	// Temp Routes    that could be changed to websocket implemmentaation  
-	apiroute.HandleFunc( "/user/message/new/" , userhandler.Authenticated( inmshandler.SendAlieMessage)).Methods(http.MethodPost)
-	apiroute.HandleFunc( "/user/message/seen/" , userhandler.Authenticated( inmshandler.SetTheMessageSeen)).Methods(http.MethodPut)
-	apiroute.HandleFunc( "/group/message/new/" , userhandler.Authenticated( gmhandler.SendGroupMessage)).Methods(http.MethodPost)
-	
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
-
-
-
 
 // DirectoryListener  representing
 func DirectoryListener(next http.Handler) http.Handler {

@@ -23,10 +23,17 @@ type ClientService struct {
 	SessionHandler *session.Cookiehandler
 }
 
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
+// NewClientService function Returning ClientService instance
+func NewClientService(mainService *MainService, groupService GroupService, userser User.UserService, groupSer Group.GroupService, session *session.Cookiehandler) *ClientService {
+	return &ClientService{
+		// GroupSer:       nil,
+		MainService:    mainService,
+		Message:        make(chan entity.XMessage),
+		SessionHandler: session,
+		UserSer:        userser,
+		GroupService:   groupService,
+	}
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -40,12 +47,10 @@ func (clienservice *ClientService) Run() {
 
 // ServeHTTP handler method making the ClientService class handler Interface
 func (clienservice *ClientService) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-
 	conn, er := upgrader.Upgrade(response, request, nil)
 	if er != nil {
 		return
 	}
-
 	session := clienservice.SessionHandler.GetSession(request)
 	if session == nil {
 		return
@@ -54,7 +59,7 @@ func (clienservice *ClientService) ServeHTTP(response http.ResponseWriter, reque
 	if user == nil {
 		return
 	}
-	client := Client{
+	client := &Client{
 		ClientService:  clienservice,
 		Conn:           conn,
 		ID:             user.ID,
