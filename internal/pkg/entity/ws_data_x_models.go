@@ -32,3 +32,10 @@ type SeenConfirmIfClientExist struct {
 	// representing the message number
 	MessageNumber int
 }
+
+// ClientConnExistance struct used in
+// deleting or checking the Eistance of a clinet Connection object
+type ClientConnExistance struct {
+	IP string
+	ID string
+}

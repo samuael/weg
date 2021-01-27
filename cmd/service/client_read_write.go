@@ -26,7 +26,13 @@ type Client struct {
 	MainService    *MainService
 	AlieSer        Alie.AlieService
 	MessageSer     Message.MessageService
-	ActiveUsr      chan *entity.SeenConfirmMessage
+	// this channel variable is used by main service
+	// to notify the client about the presence of this client
+	// specified in seenConfirmeMsg.AlieID and to modify the
+	// message that is exchanged by the two clients which it's
+	// message is specified in the instances
+	//  SeenConfirmMsg.MessageNumber
+	SeenConfirmMsg chan entity.SeenConfirmMessage
 }
 
 const (
@@ -46,6 +52,13 @@ func (client *Client) ReadMessage(key string) {
 	defer func() {
 		client.Conns[key].Conn.Close()
 		close(client.Message)
+		client.MainService.DeleteClientConn <- &entity.ClientConnExistance{
+			IP: key,
+			ID: client.ID,
+		}
+
+		// recover if error happened...
+		recover()
 	}()
 
 	client.Conns[key].Conn.SetReadLimit(maxMessageSize)
@@ -184,70 +197,107 @@ func (client *Client) ReadMessage(key string) {
 		case entity.MsgSeen:
 			{
 				if body.(*entity.SeenMessage).Body.SenderID == "" {
+					body = nil
 					break
 				}
 				body.(*entity.SeenMessage).SenderID = client.User.ID
+				client.ClientService.Message <- body
 			}
 		case entity.MsgTyping, entity.MsgStopTyping:
 			{
 				body.(*entity.TypingMessage).Body.TyperID = client.User.ID
 				if body.(*entity.TypingMessage).Body.ReceiverID == "" {
+					body = nil
+					break
 
-					body.(*entity.TypingMessage).SenderID = client.User.ID
 				}
+				body.(*entity.TypingMessage).SenderID = client.User.ID
+				client.ClientService.Message <- body
 			}
 		case entity.MsgIndividualTxt:
 			{
 				if body.(*entity.EEMessage).Body.ReceiverID == "" ||
 					body.(*entity.EEMessage).Body.Text == "" {
+					body = nil
 					break
 				}
 				body.(*entity.EEMessage).SenderID = client.User.ID
-
 				// Send the Message and if the Message Sendmessageg was succesful sent it to
 				// both the Users
-				// Smessagece the ClientService mau have a lot of Call i will handle the Sendmessageg or savmessageg of the message to
-				//  the database heere message the client ReadMessage service loop
+				// Since the ClientService may have a lot of Call i will handle the Sending or saving of the message to
+				//  the database here message the client ReadMessage service loop
 				//
+				alie, messaj := client.SendAlieMessage(body.(*entity.EEMessage))
+				if alie != nil {
+					me := client.ClientService.UserSer.GetUserByID(func() string {
+						if alie.A == client.ID {
+							return client.ID
+						}
+						return alie.B
+					}())
+					if me == nil {
+						break
+					}
+					him := client.ClientService.UserSer.GetUserByID(func() string {
+						if alie.A == client.ID {
+							return alie.B
+						}
+						return alie.A
+					}())
+					if him == nil {
+						break
+					}
+					client.ClientService.Message <- &entity.NewAlie{
+						Status: entity.MsgNewAlie,
+						Body: entity.NewAlieBody{
+							ReceiverID: client.ID,
+							User:       him,
+						},
+						SenderID: client.ID,
+					}
+					client.ClientService.Message <- &entity.NewAlie{
+						Status: entity.MsgNewAlie,
+						Body: entity.NewAlieBody{
+							ReceiverID: him.ID,
+							User:       me,
+						},
+						SenderID: client.ID,
+					}
+				}
+				// sending the message if the message in not nil
+				if messaj != nil {
+					messaj.SenderID = client.ID
+					client.ClientService.Message <- messaj
+				}
 			}
 		case entity.MsgGroupTxt:
 			{
 
 			}
 		}
-		client.ClientService.Message <- body
 	}
 }
 
-// WriteMessage function handlmessageg the Writmessageg of message to the
-// end user client
-func (client *Client) WriteMessage(key string) {
-	ticker := time.NewTicker(pongWait)
+// Run loop each client
+// this loop will terminate only if the client is null
+// the client will be null if and only if all the connected client
+// machines become nil >> that is made by the main service class
+// And, Here we will chack the presence of this client in each 5 second
+// and terminate the loop if the client doesn't exist any more.~!
+func (client *Client) Run() {
+	ticker := time.NewTicker(time.Second * 3)
 	defer func() {
 		ticker.Stop()
-		client.Conns[key].Conn.Close()
 	}()
 	for {
 		select {
-		case mess, ok := <-client.Message:
+		case seenconfm := <-client.SeenConfirmMsg:
 			{
-				// messagecrease the writmessageg time limit
-				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
-				// check whether the channel is open if not return and close the loop
-				if !ok {
-					client.Conns[key].Conn.WriteMessage(websocket.CloseMessage, []byte{})
-					return
-				}
-				client.Conns[key].Conn.WriteMessage(websocket.BinaryMessage, mess.Data)
+				client.SetSeenMessageConfirmed(seenconfm.ReceiverID, seenconfm.AlieID, seenconfm.MessageNumber)
 			}
 		case <-ticker.C:
 			{
-				// the Ticker has counted nigga so i have to do some thmessageg with it
-				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
-				// checkmessageg the presence or activeness of the Connection by writmessageg a pmessageg message and
-				// if the WriteMessage returns an error meanmessageg the connection is closed
-				// i will termmessageate the loop
-				if err := client.Conns[key].Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				if client == nil {
 					return
 				}
 			}
@@ -300,7 +350,7 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 
 	alies = client.AlieSer.UpdateAlies(alies)
 	if alies == nil {
-		fmt.Println(" messageternal Server ERROR alies update Error")
+		fmt.Println(" internal Server ERROR alies update Error")
 		return nil, nil
 	}
 	return alies, message
@@ -326,6 +376,8 @@ func (client *Client) SetMessageSeen(message *entity.SeenMessage) *entity.SeenMe
 		fmt.Println(mess)
 		return nil
 	}
+	// telling the main service if the sender exist in the online list
+	// notify me to set that the message as seen_confirmed to true
 	client.MainService.SeenConfirmIfClientExistCheck <- &entity.SeenConfirmIfClientExist{
 		RequesterID:   client.ID,
 		WantedID:      message.Body.SenderID,
@@ -354,5 +406,53 @@ func (client *Client) SetMessageSeen(message *entity.SeenMessage) *entity.SeenMe
 
 // SetSeenMessageConfirmed to set the message as seen_confirmed == true after the seen message is sent to the sender
 func (client *Client) SetSeenMessageConfirmed(MyID, SenderID string, messNo int) {
+	if client != nil {
+		success := client.MessageSer.SetSeenConfirmed(MyID, SenderID, messNo)
+		if success {
+			fmt.Println(" setting the message as seen was succesful")
+			return
+		}
+		fmt.Println(" setting the message as seen is not succesful")
+	}
+}
 
+// WriteMessage function handlmessageg the Writmessageg of message to the
+// end user client
+func (client *Client) WriteMessage(key string) {
+	ticker := time.NewTicker(pongWait)
+	defer func() {
+		ticker.Stop()
+		client.Conns[key].Conn.Close()
+		client.MainService.DeleteClientConn <- &entity.ClientConnExistance{
+			IP: key,
+			ID: client.ID,
+		}
+		recover()
+	}()
+	for {
+		select {
+		case mess, ok := <-client.Message:
+			{
+				// messagecrease the writmessageg time limit
+				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				// check whether the channel is open if not return and close the loop
+				if !ok {
+					client.Conns[key].Conn.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
+				client.Conns[key].Conn.WriteMessage(websocket.BinaryMessage, mess.Data)
+			}
+		case <-ticker.C:
+			{
+				// the Ticker has counted nigga so i have to do some thmessageg with it
+				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				// checkmessageg the presence or activeness of the Connection by writmessageg a pmessageg message and
+				// if the WriteMessage returns an error meanmessageg the connection is closed
+				// i will termmessageate the loop
+				if err := client.Conns[key].Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					return
+				}
+			}
+		}
+	}
 }

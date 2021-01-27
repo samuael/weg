@@ -2,6 +2,7 @@
 package service
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -14,7 +15,7 @@ import (
 )
 
 // ClientService struct handling end to end messages and
-// assembling them
+// assembling them to be sent to main service
 type ClientService struct {
 	MainService    *MainService
 	Message        chan entity.XMessage
@@ -47,14 +48,70 @@ func NewClientService(
 	}
 }
 
+// Run method client service
+func (clientservice *ClientService) Run() {
+	for {
+		select {
+		case messa := <-clientservice.Message:
+			{
+				switch messa.GetStatus() {
+				case entity.MsgSeen:
+					{
+						mes := messa.(*entity.SeenMessage)
+						JSON, er := json.Marshal(mes)
+						if er != nil {
+							break
+						}
+						clientservice.MainService.EEMBinary <- entity.EEMBinary{
+							UserID: mes.Body.ObserverID,
+							Data:   JSON,
+						}
+						clientservice.MainService.EEMBinary <- entity.EEMBinary{
+							UserID: mes.Body.SenderID,
+							Data:   JSON,
+						}
+					}
+				case entity.MsgTyping, entity.MsgStopTyping:
+					{
+						mes := messa.(*entity.TypingMessage)
+						JSON, er := json.Marshal(mes)
+						if er != nil {
+							break
+						}
+						clientservice.MainService.EEMBinary <- entity.EEMBinary{
+							UserID: mes.Body.TyperID,
+							Data:   JSON,
+						}
+						clientservice.MainService.EEMBinary <- entity.EEMBinary{
+							UserID: mes.Body.ReceiverID,
+							Data:   JSON,
+						}
+					}
+				case entity.MsgIndividualTxt:
+					{
+						mes := messa.(*entity.EEMessage)
+						JSON, er := json.Marshal(mes)
+						if er != nil {
+							break
+						}
+						clientservice.MainService.EEMBinary <- entity.EEMBinary{
+							UserID: mes.Body.SenderID,
+							Data:   JSON,
+						}
+						clientservice.MainService.EEMBinary <- entity.EEMBinary{
+							UserID: mes.Body.ReceiverID,
+							Data:   JSON,
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-}
-
-// Run method client service
-func (clientservice *ClientService) Run() {
-
 }
 
 // ServeHTTP handler method making the ClientService class handler Interface
@@ -82,6 +139,7 @@ func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, requ
 		MainService:    clientservice.MainService,
 		MessageSer:     clientservice.MessageSer,
 		AlieSer:        clientservice.AlieSer,
+		SeenConfirmMsg: make(chan entity.SeenConfirmMessage),
 	}
 	clientservice.MainService.Register <- client
 }
