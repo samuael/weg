@@ -73,7 +73,7 @@ func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, requ
 	}
 	client := &Client{
 		ClientService:  clientservice,
-		Conn:           conn,
+		Conns:          map[string]*entity.ClientConn{GetClientIPFromRequest(request): &entity.ClientConn{Conn: conn, IP: GetClientIPFromRequest(request)}},
 		ID:             user.ID,
 		Message:        make(chan entity.EEMBinary),
 		SessionHandler: clientservice.SessionHandler,
@@ -84,8 +84,21 @@ func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, requ
 		AlieSer:        clientservice.AlieSer,
 	}
 	clientservice.MainService.Register <- client
-	// Running the raed and the Write loops to read and write the messages
-	//  from and to the Web Socket Server
-	go client.ReadMessage()
-	go client.WriteMessage()
+}
+
+// GetClientIPFromRequest returning the ip address of client making the
+// request
+func GetClientIPFromRequest(request *http.Request) string {
+	forwaredeFor := request.Header.Get("X-FORWARDED-FOR")
+	if forwaredeFor != "" {
+		return forwaredeFor
+	}
+	// RemoteAddr allows HTTP servers and other software to
+	// record the network address that sent the request,
+	//  usually for logging. This field is not filled in by
+	// ReadRequest and has no defined format.
+	// The HTTP server in this package sets RemoteAddr to an
+	// "IP:port" address before invoking a handler.
+	//  This field is ignored by the HTTP client.
+	return request.RemoteAddr
 }

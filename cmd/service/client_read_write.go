@@ -17,7 +17,7 @@ import (
 // Client struct
 type Client struct {
 	User           *entity.User
-	Conn           *websocket.Conn
+	Conns          map[string]*entity.ClientConn
 	ID             string
 	ClientService  *ClientService
 	SessionHandler *session.Cookiehandler
@@ -42,18 +42,18 @@ const (
 
 // ReadMessage function handlmessageg the Readmessageg of message from the
 // end user client
-func (client *Client) ReadMessage() {
+func (client *Client) ReadMessage(key string) {
 	defer func() {
-		client.Conn.Close()
+		client.Conns[key].Conn.Close()
 		close(client.Message)
 	}()
 
-	client.Conn.SetReadLimit(maxMessageSize)
-	client.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	client.Conn.SetPongHandler(func(string) error { client.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	client.Conns[key].Conn.SetReadLimit(maxMessageSize)
+	client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait))
+	client.Conns[key].Conn.SetPongHandler(func(string) error { client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		message := new(entity.InMess)
-		err := client.Conn.ReadJSON(message)
+		err := client.Conns[key].Conn.ReadJSON(message)
 		if err != nil {
 			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGomessagegAway, websocket.CloseAbnormalClosure) {
 			// 	log.Printf("error: %v", err)
@@ -215,41 +215,39 @@ func (client *Client) ReadMessage() {
 
 			}
 		}
-
 		client.ClientService.Message <- body
 	}
-
 }
 
 // WriteMessage function handlmessageg the Writmessageg of message to the
 // end user client
-func (client *Client) WriteMessage() {
+func (client *Client) WriteMessage(key string) {
 	ticker := time.NewTicker(pongWait)
 	defer func() {
 		ticker.Stop()
-		client.Conn.Close()
+		client.Conns[key].Conn.Close()
 	}()
 	for {
 		select {
 		case mess, ok := <-client.Message:
 			{
 				// messagecrease the writmessageg time limit
-				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
 				// check whether the channel is open if not return and close the loop
 				if !ok {
-					client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+					client.Conns[key].Conn.WriteMessage(websocket.CloseMessage, []byte{})
 					return
 				}
-				client.Conn.WriteMessage(websocket.BinaryMessage, mess.Data)
+				client.Conns[key].Conn.WriteMessage(websocket.BinaryMessage, mess.Data)
 			}
 		case <-ticker.C:
 			{
 				// the Ticker has counted nigga so i have to do some thmessageg with it
-				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
 				// checkmessageg the presence or activeness of the Connection by writmessageg a pmessageg message and
 				// if the WriteMessage returns an error meanmessageg the connection is closed
 				// i will termmessageate the loop
-				if err := client.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				if err := client.Conns[key].Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					return
 				}
 			}
