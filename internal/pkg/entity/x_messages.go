@@ -33,7 +33,7 @@ func (im *InMess) GetBody() interface{} {
 
 // SeenBody struct representing the body of seen message
 type SeenBody struct {
-	MessageNumber string `json:"message_number"`
+	MessageNumber int    `json:"message_number"`
 	SenderID      string `json:"sender_id"`
 	ObserverID    string `json:"observer_id"`
 }

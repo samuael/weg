@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/samuael/Project/Weg/internal/pkg/Alie"
+	"github.com/samuael/Project/Weg/internal/pkg/Message"
 	session "github.com/samuael/Project/Weg/internal/pkg/Session"
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
 )
@@ -24,6 +25,8 @@ type Client struct {
 	Request        *http.Request
 	MainService    *MainService
 	AlieSer        Alie.AlieService
+	MessageSer     Message.MessageService
+	ActiveUsr      chan *entity.SeenConfirmMessage
 }
 
 const (
@@ -31,13 +34,13 @@ const (
 	writeWait = 10 * time.Second
 	// Time allowed to read the next pong message from the peer.
 	pongWait = 60 * time.Second
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
+	// Send pmessagegs to peer with this period. Must be less than pongWait.
+	pmessagegPeriod = (pongWait * 9) / 10
 	// Maximum message size allowed from peer.
 	maxMessageSize = 99999999999
 )
 
-// ReadMessage function handling the Reading of message from the
+// ReadMessage function handlmessageg the Readmessageg of message from the
 // end user client
 func (client *Client) ReadMessage() {
 	defer func() {
@@ -52,7 +55,7 @@ func (client *Client) ReadMessage() {
 		message := new(entity.InMess)
 		err := client.Conn.ReadJSON(message)
 		if err != nil {
-			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGomessagegAway, websocket.CloseAbnormalClosure) {
 			// 	log.Printf("error: %v", err)
 			// }
 			break
@@ -62,7 +65,7 @@ func (client *Client) ReadMessage() {
 			continue
 		}
 		// the Message has passed
-		// the first stage of chacking whether
+		// the first stage of chackmessageg whether
 		// they are a valid message or not
 		// now i am gonna map the message to their specific Object
 		var body entity.XMessage
@@ -162,7 +165,7 @@ func (client *Client) ReadMessage() {
 			// case entity.MsgGroupProfileCHange :{
 
 			// }
-			// case entity.MsgGroupJoin : {
+			// case entity.MsgGroupJomessage : {
 
 			// }
 			// case entity.MsgDeleteUser :{
@@ -189,9 +192,9 @@ func (client *Client) ReadMessage() {
 			{
 				body.(*entity.TypingMessage).Body.TyperID = client.User.ID
 				if body.(*entity.TypingMessage).Body.ReceiverID == "" {
-					break
+
+					body.(*entity.TypingMessage).SenderID = client.User.ID
 				}
-				body.(*entity.TypingMessage).SenderID = client.User.ID
 			}
 		case entity.MsgIndividualTxt:
 			{
@@ -201,10 +204,10 @@ func (client *Client) ReadMessage() {
 				}
 				body.(*entity.EEMessage).SenderID = client.User.ID
 
-				// Send the Message and if the Message Sending was succesful sent it to
+				// Send the Message and if the Message Sendmessageg was succesful sent it to
 				// both the Users
-				// Since the ClientService mau have a lot of Call i will handle the Sending or saving of the message to
-				//  the database heere in the client ReadMessage service loop
+				// Smessagece the ClientService mau have a lot of Call i will handle the Sendmessageg or savmessageg of the message to
+				//  the database heere message the client ReadMessage service loop
 				//
 			}
 		case entity.MsgGroupTxt:
@@ -218,7 +221,7 @@ func (client *Client) ReadMessage() {
 
 }
 
-// WriteMessage function handling the Writing of message to the
+// WriteMessage function handlmessageg the Writmessageg of message to the
 // end user client
 func (client *Client) WriteMessage() {
 	ticker := time.NewTicker(pongWait)
@@ -230,7 +233,7 @@ func (client *Client) WriteMessage() {
 		select {
 		case mess, ok := <-client.Message:
 			{
-				// increase the writing time limit
+				// messagecrease the writmessageg time limit
 				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 				// check whether the channel is open if not return and close the loop
 				if !ok {
@@ -241,11 +244,11 @@ func (client *Client) WriteMessage() {
 			}
 		case <-ticker.C:
 			{
-				// the Ticker has counted nigga so i have to do some thing with it
+				// the Ticker has counted nigga so i have to do some thmessageg with it
 				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-				// checking the presence or activeness of the Connection by writing a ping message and
-				// if the WriteMessage returns an error meaning the connection is closed
-				// i will terminate the loop
+				// checkmessageg the presence or activeness of the Connection by writmessageg a pmessageg message and
+				// if the WriteMessage returns an error meanmessageg the connection is closed
+				// i will termmessageate the loop
 				if err := client.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					return
 				}
@@ -254,9 +257,9 @@ func (client *Client) WriteMessage() {
 	}
 }
 
-// SendAlieMessage for saving the message to the database and return a fully qualified
+// SendAlieMessage for savmessageg the message to the database and return a fully qualified
 // message object if the Operation was succesful else nil
-// SendAlieMessage for sending or storing a message to the database
+// SendAlieMessage for sendmessageg or stormessageg a message to the database
 func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, *entity.EEMessage) {
 	session := client.SessionHandler.GetSession(client.Request)
 
@@ -267,7 +270,7 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 		return nil, nil
 	}
 	if (message.Status != entity.MsgIndividualTxt) || (message.Body.ReceiverID != "") || (message.Body.Text != "") {
-		fmt.Println("No thing Is Sentoooo nigga ")
+		fmt.Println("No thmessageg Is Sentoooo nigga ")
 		return nil, nil
 	}
 	message.Body.SenderID = session.UserID
@@ -290,7 +293,7 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 		alies = client.AlieSer.GetAlies(message.Body.SenderID, message.Body.ReceiverID)
 	}
 	if alies == nil {
-		fmt.Println("Internal Server Error")
+		fmt.Println("messageternal Server Error")
 		return nil, nil
 	}
 	message.Body.MessageNumber = len(alies.Messages) + 1
@@ -299,13 +302,59 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 
 	alies = client.AlieSer.UpdateAlies(alies)
 	if alies == nil {
-		fmt.Println(" Internal Server ERROR alies update Error")
+		fmt.Println(" messageternal Server ERROR alies update Error")
 		return nil, nil
 	}
 	return alies, message
 }
 
 // SetMessageSeen function to update the message as seen or not
-func (client *Client) SetMessageSeen() {
+func (client *Client) SetMessageSeen(message *entity.SeenMessage) *entity.SeenMessage {
+	if (message.Status != entity.MsgSeen) || (message.Body.SenderID == "") {
+		return nil
+	}
+	if (message.Body.MessageNumber) == (0) || message.Body.SenderID == "" {
+		return nil
+	}
+	friendExist := client.ClientService.UserSer.UserWithIDExist(message.Body.SenderID)
+	if !friendExist {
+		fmt.Println("No Friend By this ID Exist nigga ")
+		return nil
+	}
+
+	// settmessageg the message seen
+	mess, success := client.MessageSer.SetMessageSeen(message.Body.SenderID, client.ID, message.Body.MessageNumber)
+	if !success {
+		fmt.Println(mess)
+		return nil
+	}
+	client.MainService.SeenConfirmIfClientExistCheck <- &entity.SeenConfirmIfClientExist{
+		RequesterID:   client.ID,
+		WantedID:      message.Body.SenderID,
+		MessageNumber: message.Body.MessageNumber,
+	}
+	// setting the seen_confirmed variable to true if the message
+	// i will use a channel named \ chan DoesUserExist  \ through which
+	// the main service will get a message and
+	// it checks whether the Client with ID specifiedBy ActiveUserExistance instance
+	// and return the message to the ActiveUserExistance.Client's SeenCOnfirm channel
+	// and i will use the Result and update the Message as seen confirmed
+	// meaning the sender knows that the receiver have seen the message
+	return message
+	// notifymessageg the websocket runnmessageg service to broadcast the seen message is undergomessageg and
+	// if the sender person present send the seen message to him.
+	// And, set the seen_confirmed = true
+}
+
+// setting the seen_confirmed variable to true if the message
+// i will use a channel named \ chan DoesUserExist  \ through which
+// the main service will get a message and
+// it checks whether the Client with ID specifiedBy ActiveUserExistance instance
+// and return the message to the ActiveUserExistance.Client's SeenCOnfirm channel
+// and i will use the Result and update the Message as seen confirmed
+// meaning the sender knows that the receiver have seen the message
+
+// SetSeenMessageConfirmed to set the message as seen_confirmed == true after the seen message is sent to the sender
+func (client *Client) SetSeenMessageConfirmed(MyID, SenderID string, messNo int) {
 
 }

@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/samuael/Project/Weg/internal/pkg/Alie"
 	"github.com/samuael/Project/Weg/internal/pkg/Group"
+	"github.com/samuael/Project/Weg/internal/pkg/Message"
 	session "github.com/samuael/Project/Weg/internal/pkg/Session"
 	"github.com/samuael/Project/Weg/internal/pkg/User"
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
@@ -20,17 +22,28 @@ type ClientService struct {
 	GroupSer       Group.GroupService
 	GroupService   GroupService
 	SessionHandler *session.Cookiehandler
+	MessageSer     Message.MessageService
+	AlieSer        Alie.AlieService
 }
 
 // NewClientService function Returning ClientService instance
-func NewClientService(mainService *MainService, groupService GroupService, userser User.UserService, groupSer Group.GroupService, session *session.Cookiehandler) *ClientService {
+func NewClientService(
+	mainService *MainService,
+	messageser Message.MessageService,
+	groupService GroupService,
+	userser User.UserService,
+	groupSer Group.GroupService,
+	alieSer Alie.AlieService,
+	session *session.Cookiehandler) *ClientService {
 	return &ClientService{
-		// GroupSer:       nil,
+		GroupSer:       groupSer,
 		MainService:    mainService,
 		Message:        make(chan entity.XMessage),
 		SessionHandler: session,
 		UserSer:        userser,
 		GroupService:   groupService,
+		MessageSer:     messageser,
+		AlieSer:        alieSer,
 	}
 }
 
@@ -40,33 +53,37 @@ var upgrader = websocket.Upgrader{
 }
 
 // Run method client service
-func (clienservice *ClientService) Run() {
+func (clientservice *ClientService) Run() {
 
 }
 
 // ServeHTTP handler method making the ClientService class handler Interface
-func (clienservice *ClientService) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	conn, er := upgrader.Upgrade(response, request, nil)
 	if er != nil {
 		return
 	}
-	session := clienservice.SessionHandler.GetSession(request)
+	session := clientservice.SessionHandler.GetSession(request)
 	if session == nil {
 		return
 	}
-	user := clienservice.UserSer.GetUserByID(session.UserID)
+	user := clientservice.UserSer.GetUserByID(session.UserID)
 	if user == nil {
 		return
 	}
 	client := &Client{
-		ClientService:  clienservice,
+		ClientService:  clientservice,
 		Conn:           conn,
 		ID:             user.ID,
 		Message:        make(chan entity.EEMBinary),
-		SessionHandler: clienservice.SessionHandler,
+		SessionHandler: clientservice.SessionHandler,
 		User:           user,
+		Request:        request,
+		MainService:    clientservice.MainService,
+		MessageSer:     clientservice.MessageSer,
+		AlieSer:        clientservice.AlieSer,
 	}
-	clienservice.MainService.Register <- client
+	clientservice.MainService.Register <- client
 	// Running the raed and the Write loops to read and write the messages
 	//  from and to the Web Socket Server
 	go client.ReadMessage()
