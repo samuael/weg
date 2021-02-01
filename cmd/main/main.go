@@ -16,6 +16,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/samuael/Project/Weg/api/apiHandler"
+	"github.com/samuael/Project/Weg/cmd/service"
 	"github.com/samuael/Project/Weg/internal/pkg/Alie/AlieRepo"
 	"github.com/samuael/Project/Weg/internal/pkg/Alie/AlieService"
 	"github.com/samuael/Project/Weg/internal/pkg/Group/GroupRepo"
@@ -77,6 +78,9 @@ func main() {
 	defer db.Client().Disconnect(context.TODO())
 	sessionHandler = session.NewCookieHandler()
 
+
+
+
 	alierepo := AlieRepo.NewAlieRepo(db)
 	alieSer := AlieService.NewAlieService(alierepo)
 
@@ -89,7 +93,24 @@ func main() {
 	messageSer := MessageService.NewMessageService(inmsRepo)
 
 	aliehandler := apiHandler.NewAliesHandler(sessionHandler, alieSer, userser)
-	userhandler := apiHandler.NewUserHandler(sessionHandler, userser)
+
+	// Continuously Running service objects instantiation
+
+
+	mainservice := service.NewMainService()
+	groupservice := service.NewGroupService()
+	clientservice := service.NewClientService(
+		mainservice , 
+		messageSer , 
+		groupservice , 
+		userser  , 
+		gservice, 
+		alieSer , 
+		sessionHandler)
+
+	// -----------------end --------------------
+	
+	userhandler := apiHandler.NewUserHandler(sessionHandler, userser ,clientservice )
 	grouphandler := apiHandler.NewGroupHandler(sessionHandler, gservice, userser)
 	inmshandler := apiHandler.NewIndvMessageHandler(sessionHandler, messageSer, userser, alieSer)
 	gmhandler := apiHandler.NewGroupMessageHandler(gservice, userser, sessionHandler, messageSer)
@@ -98,16 +119,26 @@ func main() {
 	fs := http.FileServer(http.Dir("../../web/templates/assets/"))
 	mux.Handle("/assets/", http.StripPrefix("/assets/", neuter(fs)))
 
+	// waiting for chat ws or wss web socket services with a route /chat/ 
+	// this creates a web socket client object and create a continuously running loop for each 
+	// client connection ? Not User - but , clients of user 
+	// meaning One User may have multiple clients From Mobile , Browser etc and he/she can use 
+	// multiple device on one account.
+	mux.Handle("/chat/"  , clientservice)
+
 	apiroute := mux.PathPrefix("/api/").Subrouter()
 
 	apiroute.HandleFunc("/user/new/", userhandler.RegisterClient).Methods(http.MethodPost)
 	apiroute.HandleFunc("/user/login/", userhandler.Login).Methods(http.MethodPost)
 
+// 
 	apiroute.HandleFunc("/logout", userhandler.Authenticated(userhandler.Logout)).Methods("GET")
 	apiroute.HandleFunc("/user/img/", userhandler.Authenticated(userhandler.UploadProfilePic)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/lang/new/", userhandler.Authenticated(userhandler.ChangeLanguage)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.UpdateUserProfile)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/user/myprofile/", userhandler.Authenticated(userhandler.MyProfile)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/user/password/new/", userhandler.Authenticated(userhandler.ChangeUserPassword)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/user/search/", userhandler.Authenticated(userhandler.SearchUsers)).Methods(http.MethodGet)
 
 	// GetGroupMembersList
 	apiroute.HandleFunc("/group/new/", userhandler.Authenticated(grouphandler.CreateGroup)).Methods(http.MethodPost)
