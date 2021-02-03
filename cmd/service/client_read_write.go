@@ -50,7 +50,7 @@ const (
 // end user client
 func (client *Client) ReadMessage(key string) {
 	defer func() {
-		client.Conns[key].Conn.Close()
+		(client.Conns[key]).Conn.Close()
 		close(client.Message)
 		client.MainService.DeleteClientConn <- &entity.ClientConnExistance{
 			IP: key,
@@ -169,19 +169,19 @@ func (client *Client) ReadMessage(key string) {
 					SenderID: client.User.ID,
 				}
 			}
-			// case entity.MsgAlieProfileChange : {
+			// case entity.MsgAlieProfileChange : {   // request instantiated only by http request of REST   || DONE 
+
+			// }  
+			// case entity.MsgNewAlie :{  // Only to be sent by the server to clients 
 
 			// }
-			// case entity.MsgNewAlie :{
+			// case entity.MsgGroupProfileCHange :{  // request instantiated only by http request of REST 
 
 			// }
-			// case entity.MsgGroupProfileCHange :{
+			// case entity.MsgGroupJomessage : {  // request instantiated only by http request of REST
 
 			// }
-			// case entity.MsgGroupJomessage : {
-
-			// }
-			// case entity.MsgDeleteUser :{
+			// case entity.MsgDeleteUser :{   // instantiated only by the HTTP REST 
 
 			// }
 

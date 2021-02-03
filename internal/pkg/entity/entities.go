@@ -80,12 +80,19 @@ const (
 	UserImagesPath = "img/UserImage/"
 	// PathToResources  constant
 	PathToResources = "../../web/templates/Source/Resources/"
+	// PathToIdeasImageDirectoryFromMain constant telling the path to Ideas Image Directory
+	PathToIdeasImageDirectoryFromMain = "../../web/templates/Source/Resources/IdeaImages/"
+	// PathToIdeasImageDirectory const telling the image directory from the main Package Directory
+	PathToIdeasImageDirectory = "/assets/Source/Resources/IdeaImages/"
 	// FileSchema  const
 	FileSchema = "file:///"
 	// PROTOCOL string
 	PROTOCOL = "http://"
 	// HOST string
 	HOST = "localhost:9900/"
+
+	// IDEA constant 
+	IDEA="idea"
 )
 
 // Session representing the Sesstion to Be sent with the request body

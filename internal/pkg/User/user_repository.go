@@ -12,4 +12,5 @@ type UserRepo interface {
 	GetUserByID(id string ) (*entity.User , error )
 	UserWithIDExist(friendID string ) error
 	IsGroupMember(userid , groupid string  ) error
+	SearchUsers( username string  ) ([]*entity.User  , error )
 }

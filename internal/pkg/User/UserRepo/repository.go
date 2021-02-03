@@ -3,12 +3,14 @@ package UserRepo
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/samuael/Project/Weg/internal/pkg/User"
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	// "go.mongodb.org/mongo-driver/mongo/options"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,7 +31,7 @@ func NewUserRepo(db *mongo.Database) User.UserRepo {
 // UserEmailExist check the existence of the user
 func (urepo *UserRepo) UserEmailExist(email string) error {
 	filter := bson.D{{"email", email}}
-	return urepo.DB.Collection("user").FindOne(context.TODO(), filter).Err()
+	return urepo.DB.Collection( entity.USER ).FindOne(context.TODO(), filter).Err()
 }
 
 // RegisterUser user registration
@@ -129,4 +131,44 @@ func (urepo *UserRepo) IsGroupMember(userid , groupid string  ) error {
 		}
 	}
 	return er 
+}
+
+// SearchUsers func 
+// steps  : in the terminal i am creating a text search insed in the usename  , bio and email 
+// db.user.createIndex( { username:"text"  , bio : "text"  , email:"text"  } )
+func (urepo *UserRepo)  SearchUsers(username string ) ([]*entity.User  , error ){
+	fmt.Println(username)
+	users := []*entity.User{}
+	cursor  , era := urepo.DB.Collection(entity.USER).Find(context.TODO(),  bson.D{{
+		"username"  , username , 
+	}})
+	if era != nil {
+		fmt.Println(era.Error())
+		return users , era 
+	}
+	// usr := &entity.User{}
+
+	// era = cursor.Decode(usr)
+	// if era != nil {
+	// 	return users  , era 
+	// }
+
+	tempoUsers := map[string]*entity.User{}
+	// tempoUsers[usr.ID] = usr 
+	for cursor.Next(context.TODO()) {
+		usr := &entity.User{}
+		cursor.Decode(usr)
+		if usr.ID != "" {
+			tempoUsers[usr.ID] = usr
+		}
+	}
+	if len(tempoUsers) > 1 {
+		for _ , val := range tempoUsers {
+			users = append(users  , val )
+		}
+	}
+	if len( users) ==0 {
+		return users , errors.New("No Record Found ")
+	}
+	return users  , nil 
 }

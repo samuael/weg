@@ -1,8 +1,10 @@
 package UserService
 
 import (
-	entity "github.com/samuael/Project/Weg/internal/pkg/entity"
+	"fmt"
+
 	"github.com/samuael/Project/Weg/internal/pkg/User"
+	entity "github.com/samuael/Project/Weg/internal/pkg/entity"
 )
 
 // UserService struct representing client's service
@@ -88,4 +90,14 @@ func (userser  *UserService) IsGroupMember(userid , groupid string  ) bool {
 		return false 
 	}
 	return true 
+}
+
+// SearchUsers func 
+func (userser *UserService)  SearchUsers( username string  ) []*entity.User {
+	users , era := userser .UserRepo.SearchUsers(username)
+	if era != nil {
+		fmt.Println(era.Error())
+		return nil
+	}
+	return users
 }

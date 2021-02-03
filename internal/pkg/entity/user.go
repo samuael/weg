@@ -18,6 +18,7 @@ type User struct {
 	LastUpdated time.Time `bson:"last_updated"  json:"last_updated,omitempty" `
 	MyGroups []string  `json:"my_groups,omitempty"`
 	MyAlies []string `json:"my_alies,omitempty"`
+	
 }
 // Alie struct representing two Clients ID and 
 // saving the Begginer of the Caht as StarterID and ObserverID reprsenting the other User 
@@ -28,4 +29,18 @@ type Alie struct {
 	A string  `json:"a,omitempty"`// representing the ID of one of Sender client 
 	B string `json:"b,omitempty"` // representing the ID of One Of Receiver CLient 
 	Messages []*Message `json:"messages,omitempty"`
+}
+
+// Idea class Representing an ideas 
+type Idea struct {
+	ID string `bson:"_id,omitempty" json:"id,omitempty" `
+	Title string `json:"title"`
+	Description string `json:"description"`
+	ImageURL string `json:"imageurl"`
+	Likes uint `json:"like_count"`
+	Dislikes uint `json:"dislike_count"`
+	LikersID []string `json:"likers_id"`
+	DislikersID  []string `json:"dislikers_id"`
+	OwnerID string `json:"owner_id"`
+	Owner *User `bson:"-"   json:"user,omitempty"`
 }

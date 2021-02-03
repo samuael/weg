@@ -12,4 +12,5 @@ type UserService interface  {
 	GetUserByID(id string ) *entity.User 
 	UserWithIDExist(friendID string ) bool 
 	IsGroupMember(userid , groupid string  ) bool 
+	SearchUsers( username string  ) []*entity.User 
 }

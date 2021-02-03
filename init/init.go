@@ -91,4 +91,3 @@ func autoMigrateToMongo() {
 }
 
 // drop table payments , course_to_durations , address, students , sessions , langs , teachers , field_assistants  , admins ,cources ,categorys , branchs , resources  , rooms ,  sections , lectures , questions  , asked_quetions , field_sessions , rounds , active_rounds
-

@@ -21,7 +21,7 @@ type ClientService struct {
 	Message        chan entity.XMessage
 	UserSer        User.UserService
 	GroupSer       Group.GroupService
-	GroupService   GroupService
+	GroupService   *GroupService
 	SessionHandler *session.Cookiehandler
 	MessageSer     Message.MessageService
 	AlieSer        Alie.AlieService
@@ -31,7 +31,7 @@ type ClientService struct {
 func NewClientService(
 	mainService *MainService,
 	messageser Message.MessageService,
-	groupService GroupService,
+	groupService *GroupService,
 	userser User.UserService,
 	groupSer Group.GroupService,
 	alieSer Alie.AlieService,
@@ -103,6 +103,10 @@ func (clientservice *ClientService) Run() {
 							Data:   JSON,
 						}
 					}
+				case entity.MsgAlieProfileChange:
+					{
+						clientservice.BroadcastAlieProfileChange(messa.(*entity.AlieProfile))
+					}
 				}
 			}
 		}
@@ -159,4 +163,22 @@ func GetClientIPFromRequest(request *http.Request) string {
 	// "IP:port" address before invoking a handler.
 	//  This field is ignored by the HTTP client.
 	return request.RemoteAddr
+}
+
+// BroadcastAlieProfileChange looping overs all the alies or friends of the user
+// the alie profile change will be broadcasted
+func (clientservice *ClientService) BroadcastAlieProfileChange(alieProfileChangeMessage *entity.AlieProfile) {
+	jsonMess, er := json.Marshal(alieProfileChangeMessage)
+	if er != nil {
+		return
+	}
+	for _, usrID := range alieProfileChangeMessage.Body.MyAlies {
+		if usrID != "" {
+			// send the json message of the user for all the friends of the user.
+			clientservice.MainService.EEMBinary <- entity.EEMBinary{
+				UserID: usrID,
+				Data:   jsonMess,
+			}
+		}
+	}
 }
