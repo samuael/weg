@@ -21,6 +21,8 @@ import (
 	"github.com/samuael/Project/Weg/internal/pkg/Alie/AlieService"
 	"github.com/samuael/Project/Weg/internal/pkg/Group/GroupRepo"
 	"github.com/samuael/Project/Weg/internal/pkg/Group/GroupService"
+	"github.com/samuael/Project/Weg/internal/pkg/Idea/IdeaRepo"
+	"github.com/samuael/Project/Weg/internal/pkg/Idea/IdeaService"
 
 	// "github.com/samuael/Project/Weg/internal/pkg/Message"
 	"github.com/samuael/Project/Weg/internal/pkg/Message/MessageRepo"
@@ -94,6 +96,11 @@ func main() {
 
 	aliehandler := apiHandler.NewAliesHandler(sessionHandler, alieSer, userser)
 
+
+	idearepo := IdeaRepo.NewIdeaRepo(db)
+	ideaser := IdeaService.NewIdeaService( idearepo  )
+	ideahand := apiHandler.NewIdeaHandler(sessionHandler  , ideaser  , userser)
+
 	// Continuously Running service objects instantiation
 
 
@@ -127,7 +134,10 @@ func main() {
 	mux.Handle("/chat/"  , clientservice)
 
 	apiroute := mux.PathPrefix("/api/").Subrouter()
-
+	// CreateIdea
+	apiroute.HandleFunc("/idea/new/", ideahand.CreateIdea).Methods(http.MethodPost)
+	
+	
 	apiroute.HandleFunc("/user/new/", userhandler.RegisterClient).Methods(http.MethodPost)
 	apiroute.HandleFunc("/user/login/", userhandler.Login).Methods(http.MethodPost)
 
