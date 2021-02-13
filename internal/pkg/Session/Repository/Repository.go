@@ -3,7 +3,7 @@ package SessionRepo
 import (
 	"fmt"
 
-	entity "github.com/Projects/Inovide/models"
+	// entity "github.com/Projects/Inovide/models"
 	"github.com/jinzhu/gorm"
 )
 

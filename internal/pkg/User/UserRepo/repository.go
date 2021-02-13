@@ -103,14 +103,12 @@ func (urepo *UserRepo) UserWithIDExist(friendID string ) error {
 	if er != nil {
 		return  er 
 	}
-	er = urepo.DB.Collection(entity.USER).FindOne( context.TODO() , bson.D{{"_id", oid }}).Decode(user)
+	er = urepo.DB.Collection(entity.USER).FindOne( context.TODO() , bson.D{{"_id", oid }}  ).Decode(user)
 	if user.ID =="" || user.Email=="" || user.Password==""{
-		return errors.New("No User Found!")
+		return errors.New("No User Found ! ")
 	}
 	return nil 
 }
-
-
 // IsGroupMember  repository returning whether the use is a member or not 
 // return value error if the user is not a member of that group
 // otherwise it returns nil
@@ -124,7 +122,6 @@ func (urepo *UserRepo) IsGroupMember(userid , groupid string  ) error {
 	if er != nil {
 		return er
 	}
-
 	for _  , val := range user.MyGroups{
 		if val == groupid {
 			return nil 
@@ -139,34 +136,29 @@ func (urepo *UserRepo) IsGroupMember(userid , groupid string  ) error {
 func (urepo *UserRepo)  SearchUsers(username string ) ([]*entity.User  , error ){
 	fmt.Println(username)
 	users := []*entity.User{}
-	cursor  , era := urepo.DB.Collection(entity.USER).Find(context.TODO(),  bson.D{{
-		"username"  , username , 
-	}})
+	cursor  , era := urepo.DB.Collection(entity.USER).Find(context.TODO(),  bson.M{ "$text": bson.D{{"$search" ,  username} } })
 	if era != nil {
 		fmt.Println(era.Error())
 		return users , era 
 	}
-	// usr := &entity.User{}
-
-	// era = cursor.Decode(usr)
-	// if era != nil {
-	// 	return users  , era 
-	// }
-
 	tempoUsers := map[string]*entity.User{}
 	// tempoUsers[usr.ID] = usr 
 	for cursor.Next(context.TODO()) {
 		usr := &entity.User{}
 		cursor.Decode(usr)
 		if usr.ID != "" {
+
 			tempoUsers[usr.ID] = usr
 		}
 	}
-	if len(tempoUsers) > 1 {
+	if len(tempoUsers) > 0 {
 		for _ , val := range tempoUsers {
 			users = append(users  , val )
 		}
 	}
+
+
+
 	if len( users) ==0 {
 		return users , errors.New("No Record Found ")
 	}

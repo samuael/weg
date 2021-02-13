@@ -134,14 +134,19 @@ func main() {
 	mux.Handle("/chat/"  , clientservice)
 
 	apiroute := mux.PathPrefix("/api/").Subrouter()
-	// CreateIdea
-	apiroute.HandleFunc("/idea/new/", ideahand.CreateIdea).Methods(http.MethodPost)
-	
+	// CreateIdea  ownerid    DeleteIdeaByID DislikeIdea  GetIdeasByUserID
+	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdea)).Methods(http.MethodPost)
+	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.UpdateIdea)).Methods(http.MethodPut)
+	apiroute.HandleFunc("/ideas/", userhandler.Authenticated(ideahand.GetIdeas)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.GetIdeaByID)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.GetIdeaByID)).Methods(http.MethodDelete)
+	apiroute.HandleFunc("/idea/like", userhandler.Authenticated(ideahand.LikeIdea)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/idea/dislike", userhandler.Authenticated(ideahand.DislikeIdea)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/user/ideas/", userhandler.Authenticated(ideahand.GetIdeasByUserID)).Methods(http.MethodGet)
 	
 	apiroute.HandleFunc("/user/new/", userhandler.RegisterClient).Methods(http.MethodPost)
 	apiroute.HandleFunc("/user/login/", userhandler.Login).Methods(http.MethodPost)
 
-// 
 	apiroute.HandleFunc("/logout", userhandler.Authenticated(userhandler.Logout)).Methods("GET")
 	apiroute.HandleFunc("/user/img/", userhandler.Authenticated(userhandler.UploadProfilePic)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/lang/new/", userhandler.Authenticated(userhandler.ChangeLanguage)).Methods(http.MethodGet)

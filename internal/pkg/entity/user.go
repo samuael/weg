@@ -18,6 +18,7 @@ type User struct {
 	LastUpdated time.Time `bson:"last_updated"  json:"last_updated,omitempty" `
 	MyGroups []string  `json:"my_groups,omitempty"`
 	MyAlies []string `json:"my_alies,omitempty"`
+	IdeasCount int `json:"ideas_count"`
 	
 }
 // Alie struct representing two Clients ID and 

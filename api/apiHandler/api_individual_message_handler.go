@@ -119,7 +119,7 @@ func (inms *IndividualMessageHandler) OurEndToEndMessage(response http.ResponseW
 	response.Header().Set("Content-Type", "application/json")
 	lang := GetSetLang(inms, response, request)
 	session := inms.Session.GetSession(request)
-
+	// context := echo.New().NewContext( )
 	res := &struct {
 		Success  bool              `json:"success"`
 		Message  string            `json:"message"`

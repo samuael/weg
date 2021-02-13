@@ -51,7 +51,7 @@ func autoMigrate() {
 func autoMigrateToMongo() {
 	db := db.ConnectMongodb()
 	collection := db.Collection("admin")
-
+	// db.Collection(entity.USER).Crea
 	collection.InsertOne(context.TODO()  , entity.Admin{
 		// ID : "" , 
 		Username : "samuael" , 
@@ -80,14 +80,12 @@ func autoMigrateToMongo() {
 		fmt.Println("Decode Error" , era)
 		return 
 	}
-
 	for cursor.Next(context.TODO()) {
 		ad := &entity.Admin{}
 		cursor.Decode(ad)
 		fmt.Println(ad.ID , ad.Username  , ad.Imageurl , ad.Time )
 	}
-	// bson.Unmarshal(a ,admino  )
-
 }
 
 // drop table payments , course_to_durations , address, students , sessions , langs , teachers , field_assistants  , admins ,cources ,categorys , branchs , resources  , rooms ,  sections , lectures , questions  , asked_quetions , field_sessions , rounds , active_rounds
+// 

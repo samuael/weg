@@ -17,6 +17,7 @@ func main(){
 	alie := entity.AlieProfile{}
 	messeen := entity.MessageSeen{}
 	typingmes := entity.TypingMessage{}
+	idea := entity.Idea{}
 	fmt.Println(string(Helper.MarshalThis(group)))
 	fmt.Println(string(Helper.MarshalThis(user)))
 	fmt.Println(string(Helper.MarshalThis(message)))
@@ -25,5 +26,6 @@ func main(){
 	fmt.Println(string(Helper.MarshalThis(alie)))
 	fmt.Println(string(Helper.MarshalThis(messeen)))
 	fmt.Println(string(Helper.MarshalThis(typingmes)))
+	fmt.Println(string(Helper.MarshalThis(idea)))
 	fmt.Println(Helper.RemoveObjectIDPrefix("ObjectID(\"5fe1b21d88b1deda65a9a507\")"))
 }

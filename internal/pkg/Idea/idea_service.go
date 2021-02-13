@@ -5,5 +5,11 @@ import "github.com/samuael/Project/Weg/internal/pkg/entity"
 
 // IdeaService representing idea service methods
 type IdeaService interface {
-	CreteIdea(*entity.Idea ) *entity.Idea
+	CreateIdea(*entity.Idea ) *entity.Idea
+	GetIdeas(  userid string   , offset , limit  int )( []*entity.Idea    )
+	GetIdeaByID( id string  )(*entity.Idea   )
+	GetMyIdeas( userid string    )([]*entity.Idea  )
+	DeleteIdeaByID(id string ) bool
+	UpdateIdea( idea *entity.Idea  ) *entity.Idea 
+	// GetIdeasByUserID(userid string ) []*entity.Idea
 }
