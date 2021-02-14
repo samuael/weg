@@ -134,8 +134,9 @@ func main() {
 	mux.Handle("/chat/"  , clientservice)
 
 	apiroute := mux.PathPrefix("/api/").Subrouter()
-	// CreateIdea  ownerid    DeleteIdeaByID DislikeIdea  GetIdeasByUserID
+	// CreateIdea  ownerid    DeleteIdeaByID DislikeIdea  GetIdeasByUserID CreateIdeaJSONInput
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdea)).Methods(http.MethodPost)
+	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdeaJSONInput)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.UpdateIdea)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/ideas/", userhandler.Authenticated(ideahand.GetIdeas)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.GetIdeaByID)).Methods(http.MethodGet)
