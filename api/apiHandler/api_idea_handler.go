@@ -153,6 +153,88 @@ func (ideah *IdeaHandler)  CreateIdea(  response http.ResponseWriter  , request 
 	response.Write(Helper.MarshalThis(res))
 }
 
+// CreateIdeaJSONInput creating an idea usign json input 
+// INPUT : JSON 
+/*
+	{
+		"title" : "false"  , 
+		"description" : "this is samauel "
+	}
+
+	OUTPUT : 
+	
+Out Put : 
+{
+	"sucess" : false , 
+	"message" : "message here " , 
+	"idea"  : "idea"  : {
+		"title":"",
+		"description":"",
+		"imageurl":"",
+		"like_count":0,
+		"dislike_count":0,
+		"likers_id":null,
+		"dislikers_id":null,
+		"owner_id":""
+	}
+}
+*/
+func (ideah *IdeaHandler)  CreateIdeaJSONInput(  response http.ResponseWriter  , request *http.Request ){
+	lang := GetSetLang(ideah , response , request )
+	session := ideah.Session.GetSession(request)
+	response.Header().Set("Content-Type"  , "application/json")
+
+	in := &struct{
+		Title string `json:"title"`
+		Description string `json:"description"`
+	}{}
+	res := &struct{
+		Success bool `json:"success"`
+		Message string `json:"message"`
+		Idea *entity.Idea `json:"idea"`
+	}{
+		Success : false , 
+		Message : translation.Translate(lang , "Invalid Input Please Try Again ... "),
+	}
+	jdec := json.NewDecoder(request.Body)
+	era := jdec.Decode(in)
+	if era != nil {
+		res.Message=translation.Translate(lang  , "Invalid Input \n Tile and Description must be submitted ")
+		response.Write(Helper.MarshalThis(res))
+		return 
+	}
+	if in.Title == "" || in.Description == ""{
+		res.Message=translation.Translate(lang  , "Invalid Input \n Tile and Description must be submitted ")
+		response.Write(Helper.MarshalThis(res))
+		return 
+	}
+	if exists := ideah.UserSer.UserWithIDExist(session.UserID); !exists{
+		res.Message= translation.Translate(lang  , "You Are Not allowed To Access this Functionality ")
+		ideah.Session.DeleteSession(response , request)
+		response.Write(Helper.MarshalThis(res))
+		return 
+	}
+		idea := &entity.Idea{
+		Title: in.Title,
+		Description: in.Description,
+		Likes: 0,
+		Dislikes: 0,
+		LikersID: []string{},
+		DislikersID: []string{},
+		OwnerID: session.UserID,
+	}
+	if idea = ideah.IdeaSer.CreateIdea( idea  ); idea == nil {
+		res.Message = translation.Translate(lang  , " Inernal Server Error ")
+		log.Println("Internal Server ERROR While Creating an Idea .. ")
+		response.Write(Helper.MarshalThis(res))
+		return
+	}
+	res.Message= translation.Translate(lang , "Succesfuly Created an Idea .. ")
+	res.Success = true
+	res.Idea = idea 
+	response.Write(Helper.MarshalThis(res))
+}
+
 // GetIdeas function for getting the ideas using the offset and limit 
 // offset , limit 
 // Method Get 
