@@ -1,6 +1,11 @@
 package service
 
-import "github.com/samuael/Project/Weg/internal/pkg/entity"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/samuael/Project/Weg/internal/pkg/entity"
+)
 
 // MainService struct representing the main service class and
 // having continuously running "run()"  method as a handler of messages
@@ -40,6 +45,8 @@ func (mainservice *MainService) Run() {
 		close(mainservice.EEMBinary)
 		close(mainservice.GMMBinary)
 	}()
+	// Instantiating continiously running gorouting to  active users notification
+	go mainservice.ActiveUsersNotification()
 	for {
 		select {
 		case client := <-mainservice.Register:
@@ -56,6 +63,7 @@ func (mainservice *MainService) Run() {
 			}
 		case message := <-mainservice.EEMBinary:
 			{
+				println("Main Service : "  , message.Data)
 				mainservice.SendEEMessage(message)
 			}
 		case gmessage := <-mainservice.GMMBinary:
@@ -65,8 +73,24 @@ func (mainservice *MainService) Run() {
 		case deleteClientConn := <-mainservice.DeleteClientConn:
 			{
 				mainservice.DeleteUserClientConn(deleteClientConn)
-			}
+			}		
 		}
+	}
+}
+
+// ActiveUsersNotification broadcasting active friends to all active users 
+func (mainservice *MainService) ActiveUsersNotification(){
+	ticker := time.NewTicker(time.Duration( time.Second * 12))
+	defer func(){
+		ticker.Stop()
+	}()
+	for{
+		select{
+		case <-ticker.C : {
+			mainservice.ActiveFriendsBroadcast();
+		}
+		}
+
 	}
 }
 
@@ -74,6 +98,11 @@ func (mainservice *MainService) Run() {
 func (mainservice *MainService) RegisterClient(client *Client) {
 	// check the presense of the client in the client map and if the present
 	// create another websocket.Conn object in and Runn REad message on it.
+	var ip string
+	for ips  := range client.Conns{
+		ip= ips
+	}
+	print("Registering nigga  ")
 	for id, lclient := range mainservice.ClientMap {
 
 		if client.ID == id {
@@ -90,6 +119,7 @@ func (mainservice *MainService) RegisterClient(client *Client) {
 				//  no ip is found simmilar to mine nigga am gonna
 				// join the conns listo
 				lclient.Conns[ip] = ccon
+				println("Running the Client Threads in the existing client ... ")
 				go lclient.ReadMessage(ip)
 				go lclient.WriteMessage(ip)
 				return
@@ -119,10 +149,10 @@ func (mainservice *MainService) RegisterClient(client *Client) {
 		}
 	}
 	mainservice.ClientMap[client.ID] = client
-	for ip := range client.Conns {
-		go client.ReadMessage(ip)
-		go client.WriteMessage(ip)
-	}
+	println("Running the Client Threads  ")
+	go client.ReadMessage(ip)
+	go client.WriteMessage(ip)
+	
 }
 
 // UnregisterClient functio to un register the Client to the clientMap
@@ -191,6 +221,7 @@ func (mainservice *MainService) SeenConfirmIfClientExist(seencheck *entity.SeenC
 func (mainservice *MainService) SendEEMessage(message entity.EEMBinary) {
 	for id, client := range mainservice.ClientMap {
 		if id == message.UserID {
+			println("Last Sending to " , id )
 			client.Message <- message
 		}
 	}
@@ -220,5 +251,34 @@ func (mainservice *MainService) DeleteUserClientConn(dccex *entity.ClientConnExi
 	delete(user.Conns, dccex.IP)
 	if len(user.Conns) == 0 {
 		mainservice.UnRegister <- user
+	}
+}
+
+// ActiveFriendsBroadcast method 
+func (mainservice *MainService)  ActiveFriendsBroadcast(){
+	for id , cl := range mainservice.ClientMap{
+		activeFriens := []string{id}
+		for  _ , alieID := range cl.User.MyAlies{
+			if(mainservice.ClientMap[alieID] != nil  ){
+				activeFriens = append(activeFriens, alieID)
+			}
+		} 
+
+		if len(activeFriens)> 0 {
+			activeInfo := entity.XActiveFriends{
+				UserID : id ,
+				Status : int(entity.ActiveFriends) ,
+				ActiveFriends: activeFriens, 
+			}
+			if data  , era := json.Marshal(activeInfo); era == nil {
+				eemess := entity.EEMBinary{
+					Data: data,
+					UserID: activeInfo.UserID , 
+				}
+				// println(string(data))
+				mainservice.EEMBinary <- eemess 
+			}
+			
+		}
 	}
 }

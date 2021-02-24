@@ -89,11 +89,14 @@ func (clientservice *ClientService) Run() {
 					}
 				case entity.MsgIndividualTxt:
 					{
+						println("Inside Client Service : Incomming message ")
 						mes := messa.(*entity.EEMessage)
 						JSON, er := json.Marshal(mes)
 						if er != nil {
+							println("Breaking \n\n\n ")
 							break
 						}
+						println("Breaod Casting ")
 						clientservice.MainService.EEMBinary <- entity.EEMBinary{
 							UserID: mes.Body.SenderID,
 							Data:   JSON,
@@ -120,16 +123,20 @@ var upgrader = websocket.Upgrader{
 
 // ServeHTTP handler method making the ClientService class handler Interface
 func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	print(" I Am Called ...  ")
 	conn, er := upgrader.Upgrade(response, request, nil)
 	if er != nil {
+		print("Error Upgrading the request ")
 		return
 	}
 	session := clientservice.SessionHandler.GetSession(request)
 	if session == nil {
+		print("He Doesn't Have a session ... ")
 		return
 	}
 	user := clientservice.UserSer.GetUserByID(session.UserID)
 	if user == nil {
+		print("There is no User by this id ")
 		return
 	}
 	client := &Client{
@@ -145,6 +152,7 @@ func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, requ
 		AlieSer:        clientservice.AlieSer,
 		SeenConfirmMsg: make(chan entity.SeenConfirmMessage),
 	}
+	println("Sent to the register channel .. ")
 	clientservice.MainService.Register <- client
 }
 

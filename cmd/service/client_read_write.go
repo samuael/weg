@@ -12,6 +12,7 @@ import (
 	"github.com/samuael/Project/Weg/internal/pkg/Message"
 	session "github.com/samuael/Project/Weg/internal/pkg/Session"
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
+	"github.com/samuael/Project/Weg/pkg/Helper"
 )
 
 // Client struct
@@ -46,150 +47,53 @@ const (
 	maxMessageSize = 99999999999
 )
 
+
+
 // ReadMessage function handlmessageg the Readmessageg of message from the
 // end user client
 func (client *Client) ReadMessage(key string) {
 	defer func() {
+		println("I Am Leaving nigga")
 		(client.Conns[key]).Conn.Close()
-		close(client.Message)
+		//  close(client.Message)
 		client.MainService.DeleteClientConn <- &entity.ClientConnExistance{
 			IP: key,
 			ID: client.ID,
 		}
-
 		// recover if error happened...
 		recover()
 	}()
-
 	client.Conns[key].Conn.SetReadLimit(maxMessageSize)
-	client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait))
-	client.Conns[key].Conn.SetPongHandler(func(string) error { client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	// client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait))
+	client.Conns[key].Conn.SetPongHandler(func(string) error { /*client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait)); */return nil })
 	for {
-		message := new(entity.InMess)
+		print("Im running")
+		message := &entity.InMess{}
 		err := client.Conns[key].Conn.ReadJSON(message)
 		if err != nil {
 			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGomessagegAway, websocket.CloseAbnormalClosure) {
 			// 	log.Printf("error: %v", err)
 			// }
+			// websocket.
+			println(err.Error())
 			break
+		}
+		println(string(Helper.MarshalThis(message)))
+		if message == nil {
+			continue
 		}
 		// Brodcast the message
 		if message.GetStatus() <= 0 || message.GetStatus() > 13 {
+			println("Not A Valid Message ...  ")
 			continue
 		}
+
 		// the Message has passed
 		// the first stage of chackmessageg whether
 		// they are a valid message or not
 		// now i am gonna map the message to their specific Object
 		var body entity.XMessage
-		switch message.GetStatus() {
-
-		case entity.MsgSeen:
-			{
-				body = &entity.SeenMessage{
-					Status: message.GetStatus(),
-					Body: func() entity.SeenBody {
-						val := entity.SeenBody{}
-						theBytes, er := json.Marshal(message.GetBody())
-						if er != nil {
-							return val
-						}
-						decoder := json.NewDecoder(bytes.NewReader(theBytes))
-						decoder.Decode(&val)
-						return val
-					}(),
-					SenderID: client.User.ID,
-				}
-			}
-		case entity.MsgTyping:
-			{
-				body = &entity.TypingMessage{
-					Status: message.GetStatus(),
-					Body: func() entity.TypingBody {
-						val := entity.TypingBody{}
-						theBytes, er := json.Marshal(message.GetBody())
-						if er != nil {
-							return val
-						}
-						decoder := json.NewDecoder(bytes.NewReader(theBytes))
-						decoder.Decode(&val)
-						return val
-					}(),
-					SenderID: client.User.ID,
-				}
-			}
-		case entity.MsgStopTyping:
-			{
-				body = &entity.TypingMessage{
-					Status: message.GetStatus(),
-					Body: func() entity.TypingBody {
-						val := entity.TypingBody{}
-						theBytes, er := json.Marshal(message.GetBody())
-						if er != nil {
-							return val
-						}
-						decoder := json.NewDecoder(bytes.NewReader(theBytes))
-						decoder.Decode(&val)
-						return val
-					}(),
-					SenderID: client.User.ID,
-				}
-			}
-		case entity.MsgIndividualTxt:
-			{
-				body = &entity.EEMessage{
-					Status: message.GetStatus(),
-					Body: func() entity.Message {
-						val := entity.Message{}
-						theBytes, er := json.Marshal(message.GetBody())
-						if er != nil {
-							return val
-						}
-						decoder := json.NewDecoder(bytes.NewReader(theBytes))
-						decoder.Decode(&val)
-						return val
-					}(),
-					SenderID: client.User.ID,
-				}
-			}
-		case entity.MsgGroupTxt:
-			{
-				body = &entity.GMMessage{
-					Status: message.GetStatus(),
-					Body: func() entity.GroupMessage {
-						val := entity.GroupMessage{}
-						theBytes, er := json.Marshal(message.GetBody())
-						if er != nil {
-							return val
-						}
-						decoder := json.NewDecoder(bytes.NewReader(theBytes))
-						decoder.Decode(&val)
-						return val
-					}(),
-					SenderID: client.User.ID,
-				}
-			}
-			// case entity.MsgAlieProfileChange : {   // request instantiated only by http request of REST   || DONE 
-
-			// }  
-			// case entity.MsgNewAlie :{  // Only to be sent by the server to clients 
-
-			// }
-			// case entity.MsgGroupProfileCHange :{  // request instantiated only by http request of REST 
-
-			// }
-			// case entity.MsgGroupJomessage : {  // request instantiated only by http request of REST
-
-			// }
-			// case entity.MsgDeleteUser :{   // instantiated only by the HTTP REST 
-
-			// }
-
-			// default:
-			// 	{
-			// 	}
-			// }
-		}
+		body = client.FilterMessage(message)
 		if body == nil {
 			continue
 		}
@@ -216,6 +120,7 @@ func (client *Client) ReadMessage(key string) {
 			}
 		case entity.MsgIndividualTxt:
 			{
+				println("The Filtered Message Arrived heere nigga /.... ")
 				if body.(*entity.EEMessage).Body.ReceiverID == "" ||
 					body.(*entity.EEMessage).Body.Text == "" {
 					body = nil
@@ -227,8 +132,11 @@ func (client *Client) ReadMessage(key string) {
 				// Since the ClientService may have a lot of Call i will handle the Sending or saving of the message to
 				//  the database here message the client ReadMessage service loop
 				//
+				println("Ezigana .... ")
 				alie, messaj := client.SendAlieMessage(body.(*entity.EEMessage))
+				println("Ezigana .... Ezaga ... ")
 				if alie != nil {
+					println("New Alies Table Have been Created nigga .. ")
 					me := client.ClientService.UserSer.GetUserByID(func() string {
 						if alie.A == client.ID {
 							return client.ID
@@ -266,6 +174,7 @@ func (client *Client) ReadMessage(key string) {
 				}
 				// sending the message if the message in not nil
 				if messaj != nil {
+					println(" Seending the Message to the Clients \n\n\n")
 					messaj.SenderID = client.ID
 					client.ClientService.Message <- messaj
 				}
@@ -297,6 +206,7 @@ func (client *Client) Run() {
 			}
 		case <-ticker.C:
 			{
+				print("I Am Reading ... ")
 				if client == nil {
 					return
 				}
@@ -317,7 +227,7 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 		fmt.Println("UnAuthorized User ....")
 		return nil, nil
 	}
-	if (message.Status != entity.MsgIndividualTxt) || (message.Body.ReceiverID != "") || (message.Body.Text != "") {
+	if (message.Status != entity.MsgIndividualTxt) || (message.Body.ReceiverID == "") || (message.Body.Text == "") {
 		fmt.Println("No thmessageg Is Sentoooo nigga ")
 		return nil, nil
 	}
@@ -434,7 +344,7 @@ func (client *Client) WriteMessage(key string) {
 		case mess, ok := <-client.Message:
 			{
 				// messagecrease the writmessageg time limit
-				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				// client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
 				// check whether the channel is open if not return and close the loop
 				if !ok {
 					client.Conns[key].Conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -445,7 +355,9 @@ func (client *Client) WriteMessage(key string) {
 		case <-ticker.C:
 			{
 				// the Ticker has counted nigga so i have to do some thmessageg with it
-				client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
+
+				// client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				
 				// checkmessageg the presence or activeness of the Connection by writmessageg a pmessageg message and
 				// if the WriteMessage returns an error meanmessageg the connection is closed
 				// i will termmessageate the loop
@@ -455,4 +367,98 @@ func (client *Client) WriteMessage(key string) {
 			}
 		}
 	}
+}
+// FilterMessage message nigga 
+func (client *Client) FilterMessage(message  *entity.InMess )  entity.XMessage {
+	var body entity.XMessage
+	switch message.GetStatus() {
+
+	case entity.MsgSeen:
+		{
+			body = &entity.SeenMessage{
+				Status: message.GetStatus(),
+				Body: func() entity.SeenBody {
+					val := entity.SeenBody{}
+					theBytes, er := json.Marshal(message.GetBody())
+					if er != nil {
+						return val
+					}
+					decoder := json.NewDecoder(bytes.NewReader(theBytes))
+					decoder.Decode(&val)
+					return val
+				}(),
+				SenderID: client.User.ID,
+			}
+		}
+	case entity.MsgTyping:
+		{
+			body = &entity.TypingMessage{
+				Status: message.GetStatus(),
+				Body: func() entity.TypingBody {
+					val := entity.TypingBody{}
+					theBytes, er := json.Marshal(message.GetBody())
+					if er != nil {
+						return val
+					}
+					decoder := json.NewDecoder(bytes.NewReader(theBytes))
+					decoder.Decode(&val)
+					return val
+				}(),
+				SenderID: client.User.ID,
+			}
+		}
+	case entity.MsgStopTyping:
+		{
+			body = &entity.TypingMessage{
+				Status: message.GetStatus(),
+				Body: func() entity.TypingBody {
+					val := entity.TypingBody{}
+					theBytes, er := json.Marshal(message.GetBody())
+					if er != nil {
+						return val
+					}
+					decoder := json.NewDecoder(bytes.NewReader(theBytes))
+					decoder.Decode(&val)
+					return val
+				}(),
+				SenderID: client.User.ID,
+			}
+		}
+	case entity.MsgIndividualTxt:
+		{
+			println("The Message Arrived Here")
+			body = &entity.EEMessage{
+				Status: message.GetStatus(),
+				Body: func() entity.Message {
+					val := entity.Message{}
+					theBytes, er := json.Marshal(message.GetBody())
+					if er != nil {
+						return val
+					}
+					decoder := json.NewDecoder(bytes.NewReader(theBytes))
+					decoder.Decode(&val)
+					return val
+				}(),
+				SenderID: client.User.ID,
+			}
+		}
+	case entity.MsgGroupTxt:
+		{
+			body = &entity.GMMessage{
+				Status: message.GetStatus(),
+				Body: func() entity.GroupMessage {
+					val := entity.GroupMessage{}
+					theBytes, er := json.Marshal(message.GetBody())
+					if er != nil {
+						return val
+					}
+					decoder := json.NewDecoder(bytes.NewReader(theBytes))
+					decoder.Decode(&val)
+					return val
+				}(),
+				SenderID: client.User.ID,
+			}
+		}
+	}
+	return body
 }

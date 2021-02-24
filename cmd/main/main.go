@@ -114,7 +114,8 @@ func main() {
 		gservice, 
 		alieSer , 
 		sessionHandler)
-
+		go mainservice.Run()
+		go clientservice.Run()
 	// -----------------end --------------------
 	
 	userhandler := apiHandler.NewUserHandler(sessionHandler, userser ,clientservice )

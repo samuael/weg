@@ -276,3 +276,11 @@ type GMMBinary struct {
 	GroupID string
 	Data    []byte
 }
+
+// XActiveFriends struct 
+type XActiveFriends  struct {
+	Status int ;
+	UserID string ;
+	ActiveFriends []string ;
+  }
+  
