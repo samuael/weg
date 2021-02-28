@@ -9,4 +9,5 @@ type AdminService interface {
 	DeleteAdminByID( id string  ) bool 
 	GetAdminByEmail(email string )  *entity.Admin 
 	SaveAdmin(admin *entity.Admin)  *entity.Admin 
+	AdminEmailExist(   email string ) bool 
 }

@@ -86,3 +86,10 @@ func (adminrepo *AdminRepo) SaveAdmin(admin *entity.Admin) (*entity.Admin , erro
 	}
 	return admin, nil
 } 
+
+
+// AdminEmailExist (   email string ) error
+func (adminrepo *AdminRepo)  AdminEmailExist(   email string ) error{
+	filter := bson.D{{"email", email}}
+	return adminrepo.DB.Collection( entity.ADMIN ).FindOne(context.TODO(), filter).Err()
+}

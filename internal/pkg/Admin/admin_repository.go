@@ -9,4 +9,5 @@ type AdminRepo interface {
 	DeleteAdminByID(id string ) error 
 	GetAdminByEmail(email string )  (*entity.Admin  , error )
 	SaveAdmin( admin *entity.Admin  ) (*entity.Admin , error)
+	AdminEmailExist(   email string ) error
 }

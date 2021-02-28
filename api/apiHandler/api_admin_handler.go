@@ -3,12 +3,14 @@ package apiHandler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/samuael/Project/Weg/internal/pkg/Admin"
 	session "github.com/samuael/Project/Weg/internal/pkg/Session"
 	"github.com/samuael/Project/Weg/internal/pkg/User"
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
 	"github.com/samuael/Project/Weg/pkg/Helper"
+	"github.com/samuael/Project/Weg/pkg/translation"
 )
 
 // AdminHandler struct
@@ -45,7 +47,7 @@ func (adminh *AdminHandler) GetSessionHandler() *session.Cookiehandler {
 // }
 func (adminh *AdminHandler)  CreateAdmin( response http.ResponseWriter  , request *http.Request ){
 	session := adminh.Session.GetSession(request)
-
+	response.Header().Set("Content-Type"  , "application/json")
 	res := &struct{
 		Success bool `json:"success"`
 		Message string `json:"message"`
@@ -246,6 +248,71 @@ func (adminh *AdminHandler)   UpdateAdmin(response http.ResponseWriter , request
 	res.Admin = admin 
 	res.Success = true 
 	response.Write(Helper.MarshalThis(res))
+}
+
+
+
+// AdminLogin method 
+func (adminh *AdminHandler) AdminLogin(response http.ResponseWriter, request *http.Request) {
+	lang := GetSetLang(adminh, response, request)
+	response.Header().Set("Content-Type", "application/json")
+	ret := struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}{
+		Success: false,
+		Message: translation.Translate(lang, " INVALID INPUT "),
+	}
+	reciver := &struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}{}
+	jdecoder := json.NewDecoder(request.Body)
+	derorr := jdecoder.Decode(reciver)
+	if derorr != nil {
+		response.Write(Helper.MarshalThis(ret))
+		return
+	}
+	// check whether the email is valid or not
+	reciver.Email = strings.Trim(reciver.Email, " ")
+	if !Helper.MatchesPattern(reciver.Email, Helper.EmailRX) {
+		ret.Message = translation.Translate(lang, " Invalid Email Input... ")
+		response.Write(Helper.MarshalThis(ret))
+		return
+	} else if !Helper.ValidatePassword(reciver.Password, 4) {
+		ret.Message = translation.Translate(lang, " Invalid Password Input... ")
+		response.Write(Helper.MarshalThis(ret))
+		return
+	}
+	exist := adminh.AdminSer.AdminEmailExist(reciver.Email)
+	if exist {
+		user := adminh.AdminSer.GetAdminByEmail(reciver.Email)
+		if user == nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			ret.Message = translation.Translate(lang, " INTERNAL SERVER ERROR ")
+			response.Write(Helper.MarshalThis(ret))
+			return
+		}
+		// check the Password
+		if !Helper.ComparePassword(user.Password, reciver.Password) {
+		} else {
+			if success := adminh.Session.SaveSession(response, &entity.Session{
+				UserID:   user.ID,
+				Username: user.Username,
+				Email:    user.Email,
+			}, entity.PROTOCOL+entity.HOST); !success {
+				ret.Message = translation.Translate(lang, " Internal Server Error : SESSION ERROR ")
+				response.Write(Helper.MarshalThis(ret))
+			} else {
+				ret.Success = true
+				ret.Message = translation.Translate(lang, " Loging in was successful ")
+				response.Write(Helper.MarshalThis(ret))
+			}
+			return
+		}
+	}
+	ret.Message = translation.Translate(lang, " Invalid Username Or Password ")
+	response.Write(Helper.MarshalThis(ret))
 }
 
 

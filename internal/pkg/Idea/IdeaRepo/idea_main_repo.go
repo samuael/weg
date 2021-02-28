@@ -86,8 +86,9 @@ func (idearepo *IdeaRepo) GetIdeaByID(id string) (*entity.Idea, error) {
 }
 // GetMyIdeas ( userid string    )([]*entity.Idea  , error )
 func (idearepo *IdeaRepo) GetMyIdeas(userid string) ([]*entity.Idea, error) {
+	print(userid);
 	ideas := []*entity.Idea{}
-	if cursor, era := idearepo.DB.Collection(entity.IDEA).Find(context.TODO(), bson.D{{"ownerid", userid}}); era == nil {
+	if cursor, era := idearepo.DB.Collection(entity.IDEA).Find(context.TODO(), bson.D{{"ownerid", userid }}); era == nil {
 		// idea := &entity.Idea{}
 		// if era = cursor.Decode(idea); era == nil {
 		// 	ideas = append(ideas, idea)
@@ -95,14 +96,14 @@ func (idearepo *IdeaRepo) GetMyIdeas(userid string) ([]*entity.Idea, error) {
 		// 	return ideas, era
 		// }
 		for cursor.Next(context.TODO()) {
-			var idea *entity.Idea
+			var idea *entity.Idea = &entity.Idea{}
 			if era = cursor.Decode(idea); era == nil {
 				ideas = append(ideas, idea)
-				continue
 			}
 		}
 		return ideas, nil
 	} else {
+		print(era.Error())
 		return ideas, era
 	}
 }

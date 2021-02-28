@@ -689,9 +689,7 @@ func (ideah *IdeaHandler)   GetIdeasByUserID(response http.ResponseWriter  , req
 	}
 	userid := request.FormValue("userid")
 	if userid == ""{
-		res.Message= translation.Translate(lang , "Invalid User ID")
-		response.Write(Helper.MarshalThis(res))
-		return 
+		userid = session.UserID
 	}
 	ideas := ideah.IdeaSer.GetMyIdeas(userid)
 	if ideas==nil || len(ideas)==0{

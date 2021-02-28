@@ -60,3 +60,12 @@ func (adminser  *AdminService ) SaveAdmin(admin *entity.Admin)  *entity.Admin  {
 	}
 	return admin 
 } 
+
+// AdminEmailExist (   email string ) bool
+func (adminser *AdminService ) AdminEmailExist(   email string ) bool {
+	 er := adminser.AdminRepo.AdminEmailExist(email)
+	if er  != nil {
+		return false
+	}
+	return true 
+}
