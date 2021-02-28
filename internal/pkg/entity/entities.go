@@ -90,6 +90,10 @@ const (
 	PROTOCOL = "http://"
 	// HOST string
 	HOST = "localhost:9900/"
+	// ADMIN string 
+	// ADMIN= "admin"
+
+
 
 	// IDEA constant 
 	IDEA="idea"

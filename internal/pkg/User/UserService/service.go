@@ -101,3 +101,12 @@ func (userser *UserService)  SearchUsers( username string  ) []*entity.User {
 	}
 	return users
 }
+
+// DeleteUserByID (id string ) ( error )
+func (userser *UserService ) DeleteUserByID(id string ) bool{
+	era := userser.UserRepo.DeleteUserByID(id)
+	if era != nil {
+		return false
+	}
+	return true 
+} 

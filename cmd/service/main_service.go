@@ -80,7 +80,7 @@ func (mainservice *MainService) Run() {
 
 // ActiveUsersNotification broadcasting active friends to all active users 
 func (mainservice *MainService) ActiveUsersNotification(){
-	ticker := time.NewTicker(time.Duration( time.Second * 12))
+	ticker := time.NewTicker(time.Duration( time.Second * 3))
 	defer func(){
 		ticker.Stop()
 	}()

@@ -17,6 +17,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/samuael/Project/Weg/api/apiHandler"
 	"github.com/samuael/Project/Weg/cmd/service"
+	"github.com/samuael/Project/Weg/internal/pkg/Admin/AdminRepo"
+	"github.com/samuael/Project/Weg/internal/pkg/Admin/AdminService"
 	"github.com/samuael/Project/Weg/internal/pkg/Alie/AlieRepo"
 	"github.com/samuael/Project/Weg/internal/pkg/Alie/AlieService"
 	"github.com/samuael/Project/Weg/internal/pkg/Group/GroupRepo"
@@ -101,6 +103,13 @@ func main() {
 	ideaser := IdeaService.NewIdeaService( idearepo  )
 	ideahand := apiHandler.NewIdeaHandler(sessionHandler  , ideaser  , userser)
 
+	// adminRelated instances 
+	adminrepo := AdminRepo.NewAdminRepo(db)
+	adminser := AdminService.NewAdminService(adminrepo)
+	adminhandler := apiHandler.NewAdminHandler(sessionHandler ,adminser , userser)
+
+
+
 	// Continuously Running service objects instantiation
 
 
@@ -135,13 +144,19 @@ func main() {
 	mux.Handle("/chat/"  , clientservice)
 
 	apiroute := mux.PathPrefix("/api/").Subrouter()
+
+	adminsRoute := apiroute.PathPrefix("/admin/").Subrouter()
+
+	adminsRoute.HandleFunc("/new/"  , userhandler.Authenticated( adminhandler.CreateAdmin )).Methods(http.MethodPost)
+	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.DeleteAdmin )).Methods(http.MethodDelete)
+	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.UpdateAdmin )).Methods(http.MethodPut)
 	// CreateIdea  ownerid    DeleteIdeaByID DislikeIdea  GetIdeasByUserID CreateIdeaJSONInput
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdea)).Methods(http.MethodPost)
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdeaJSONInput)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.UpdateIdea)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/ideas/", userhandler.Authenticated(ideahand.GetIdeas)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.GetIdeaByID)).Methods(http.MethodGet)
-	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.GetIdeaByID)).Methods(http.MethodDelete)
+	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.DeleteIdeaByID)).Methods(http.MethodDelete)
 	apiroute.HandleFunc("/idea/like", userhandler.Authenticated(ideahand.LikeIdea)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/idea/dislike", userhandler.Authenticated(ideahand.DislikeIdea)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/user/ideas/", userhandler.Authenticated(ideahand.GetIdeasByUserID)).Methods(http.MethodGet)

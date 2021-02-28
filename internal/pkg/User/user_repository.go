@@ -13,4 +13,6 @@ type UserRepo interface {
 	UserWithIDExist(friendID string ) error
 	IsGroupMember(userid , groupid string  ) error
 	SearchUsers( username string  ) ([]*entity.User  , error )
+	DeleteUserByID(id string ) ( error )
+	
 }

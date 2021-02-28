@@ -88,12 +88,12 @@ func (idearepo *IdeaRepo) GetIdeaByID(id string) (*entity.Idea, error) {
 func (idearepo *IdeaRepo) GetMyIdeas(userid string) ([]*entity.Idea, error) {
 	ideas := []*entity.Idea{}
 	if cursor, era := idearepo.DB.Collection(entity.IDEA).Find(context.TODO(), bson.D{{"ownerid", userid}}); era == nil {
-		idea := &entity.Idea{}
-		if era = cursor.Decode(idea); era == nil {
-			ideas = append(ideas, idea)
-		} else {
-			return ideas, era
-		}
+		// idea := &entity.Idea{}
+		// if era = cursor.Decode(idea); era == nil {
+		// 	ideas = append(ideas, idea)
+		// } else {
+		// 	return ideas, era
+		// }
 		for cursor.Next(context.TODO()) {
 			var idea *entity.Idea
 			if era = cursor.Decode(idea); era == nil {

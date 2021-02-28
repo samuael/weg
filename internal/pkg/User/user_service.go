@@ -13,4 +13,5 @@ type UserService interface  {
 	UserWithIDExist(friendID string ) bool 
 	IsGroupMember(userid , groupid string  ) bool 
 	SearchUsers( username string  ) []*entity.User 
+	DeleteUserByID(id string ) bool
 }

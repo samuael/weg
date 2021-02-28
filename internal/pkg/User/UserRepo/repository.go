@@ -164,3 +164,16 @@ func (urepo *UserRepo)  SearchUsers(username string ) ([]*entity.User  , error )
 	}
 	return users  , nil 
 }
+
+// DeleteUserByID (id string ) ( error )
+func (urepo *UserRepo) DeleteUserByID(id string ) ( error ){
+	oid  , er := primitive.ObjectIDFromHex(id)
+	if er != nil {
+		return er 
+	}
+	delres  , er := urepo.DB.Collection(entity.USER).DeleteOne(context.TODO(), bson.D{{"_id" , oid }})
+	if delres.DeletedCount==0 || er != nil {
+		return errors.New(" No Record Deleted ")
+	}
+	return nil 
+}

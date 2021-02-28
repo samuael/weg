@@ -279,8 +279,8 @@ type GMMBinary struct {
 
 // XActiveFriends struct 
 type XActiveFriends  struct {
-	Status int ;
-	UserID string ;
-	ActiveFriends []string ;
+	Status int   `json:"status"` ;
+	UserID string `json:"user_id"` ;
+	ActiveFriends []string   `json:"active_friends"`;
   }
   
