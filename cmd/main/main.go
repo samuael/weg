@@ -147,9 +147,11 @@ func main() {
 
 	adminsRoute := apiroute.PathPrefix("/admin/").Subrouter()
 
+	// 
 	adminsRoute.HandleFunc("/new/"  , userhandler.Authenticated( adminhandler.CreateAdmin )).Methods(http.MethodPost)
 	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.DeleteAdmin )).Methods(http.MethodDelete)
 	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.UpdateAdmin )).Methods(http.MethodPut)
+	adminsRoute.HandleFunc("/login/"  ,  adminhandler.AdminLogin ).Methods(http.MethodPost)
 	// CreateIdea  ownerid    DeleteIdeaByID DislikeIdea  GetIdeasByUserID CreateIdeaJSONInput
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdea)).Methods(http.MethodPost)
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdeaJSONInput)).Methods(http.MethodPut)
@@ -170,7 +172,9 @@ func main() {
 	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.UpdateUserProfile)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/user/myprofile/", userhandler.Authenticated(userhandler.MyProfile)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/user/password/new/", userhandler.Authenticated(userhandler.ChangeUserPassword)).Methods(http.MethodPut)
-	apiroute.HandleFunc("/user/search/", userhandler.Authenticated(userhandler.SearchUsers)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/user/search/", userhandler.Authenticated(userhandler.SearchUsers)).Methods(http.MethodGet) //
+	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.DeleteMyAccount)).Methods(http.MethodDelete) //
+
 
 	// GetGroupMembersList
 	apiroute.HandleFunc("/group/new/", userhandler.Authenticated(grouphandler.CreateGroup)).Methods(http.MethodPost)
@@ -192,6 +196,7 @@ func main() {
 
 	// Temp Routes    that could be changed to websocket implemmentaation
 	apiroute.HandleFunc("/user/message/new/", userhandler.Authenticated(inmshandler.SendAlieMessage)).Methods(http.MethodPost)
+	apiroute.HandleFunc("/user/message/", userhandler.Authenticated(inmshandler.DeleteMessage)).Methods(http.MethodDelete)
 	apiroute.HandleFunc("/user/message/seen/", userhandler.Authenticated(inmshandler.SetTheMessageSeen)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/group/message/new/", userhandler.Authenticated(gmhandler.SendGroupMessage)).Methods(http.MethodPost)
 
