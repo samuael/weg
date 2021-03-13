@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -53,6 +54,7 @@ const (
 // end user client
 func (client *Client) ReadMessage(key string) {
 	defer func() {
+		client.ClientService.MainService.UnRegister<- client
 		println("I Am Leaving nigga")
 		(client.Conns[key]).Conn.Close()
 		//  close(client.Message)
@@ -71,9 +73,9 @@ func (client *Client) ReadMessage(key string) {
 		message := &entity.InMess{}
 		err := client.Conns[key].Conn.ReadJSON(message)
 		if err != nil {
-			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGomessagegAway, websocket.CloseAbnormalClosure) {
-			// 	log.Printf("error: %v", err)
-			// }
+			if websocket.IsUnexpectedCloseError(err,  websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
 			// websocket.
 			println(err.Error())
 			break
@@ -100,6 +102,8 @@ func (client *Client) ReadMessage(key string) {
 		switch body.GetStatus() {
 		case entity.MsgSeen:
 			{
+
+				print(" Incomming Seen message ................." , body);
 				if body.(*entity.SeenMessage).Body.SenderID == "" {
 					body = nil
 					break
@@ -120,7 +124,6 @@ func (client *Client) ReadMessage(key string) {
 			}
 		case entity.MsgIndividualTxt:
 			{
-				println("The Filtered Message Arrived heere nigga /.... ")
 				if body.(*entity.EEMessage).Body.ReceiverID == "" ||
 					body.(*entity.EEMessage).Body.Text == "" {
 					body = nil
@@ -131,12 +134,8 @@ func (client *Client) ReadMessage(key string) {
 				// both the Users
 				// Since the ClientService may have a lot of Call i will handle the Sending or saving of the message to
 				//  the database here message the client ReadMessage service loop
-				//
-				println("Ezigana .... ")
 				alie, messaj := client.SendAlieMessage(body.(*entity.EEMessage))
-				println("Ezigana .... Ezaga ... ")
 				if alie != nil {
-					println("New Alies Table Have been Created nigga .. ")
 					me := client.ClientService.UserSer.GetUserByID(func() string {
 						if alie.A == client.ID {
 							return client.ID
@@ -333,6 +332,7 @@ func (client *Client) WriteMessage(key string) {
 	defer func() {
 		ticker.Stop()
 		client.Conns[key].Conn.Close()
+		client.MainService.UnRegister<-client 
 		client.MainService.DeleteClientConn <- &entity.ClientConnExistance{
 			IP: key,
 			ID: client.ID,
@@ -341,7 +341,7 @@ func (client *Client) WriteMessage(key string) {
 	}()
 	for {
 		select {
-		case mess, ok := <-client.Message:
+		case mess, ok := <-client.Conns[key].Message:
 			{
 				// messagecrease the writmessageg time limit
 				// client.Conns[key].Conn.SetWriteDeadline(time.Now().Add(writeWait))
@@ -350,7 +350,7 @@ func (client *Client) WriteMessage(key string) {
 					client.Conns[key].Conn.WriteMessage(websocket.CloseMessage, []byte{})
 					return
 				}
-				client.Conns[key].Conn.WriteMessage(websocket.BinaryMessage, mess.Data)
+				client.Conns[key].Conn.WriteMessage(websocket.TextMessage, mess )
 			}
 		case <-ticker.C:
 			{

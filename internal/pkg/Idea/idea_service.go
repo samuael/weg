@@ -11,5 +11,6 @@ type IdeaService interface {
 	GetMyIdeas( userid string    )([]*entity.Idea  )
 	DeleteIdeaByID(id string ) bool
 	UpdateIdea( idea *entity.Idea  ) *entity.Idea 
+	SearchIdeaByTitle(title string )  ([]*entity.Idea )
 	// GetIdeasByUserID(userid string ) []*entity.Idea
 }

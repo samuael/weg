@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"time"
+	// "time"
 
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
 )
@@ -45,10 +46,11 @@ func (mainservice *MainService) Run() {
 		close(mainservice.EEMBinary)
 		close(mainservice.GMMBinary)
 	}()
-	// Instantiating continiously running gorouting to  active users notification
-	go mainservice.ActiveUsersNotification()
+
+	go mainservice.ActiveFriendsNotification();
 	for {
 		select {
+
 		case client := <-mainservice.Register:
 			{
 				mainservice.RegisterClient(client)
@@ -63,7 +65,7 @@ func (mainservice *MainService) Run() {
 			}
 		case message := <-mainservice.EEMBinary:
 			{
-				println("Main Service : "  , message.Data)
+				print("..............................This is called ............................");
 				mainservice.SendEEMessage(message)
 			}
 		case gmessage := <-mainservice.GMMBinary:
@@ -73,24 +75,25 @@ func (mainservice *MainService) Run() {
 		case deleteClientConn := <-mainservice.DeleteClientConn:
 			{
 				mainservice.DeleteUserClientConn(deleteClientConn)
-			}		
-		}
-	}
+			}
+		
+	}}
 }
 
-// ActiveUsersNotification broadcasting active friends to all active users 
-func (mainservice *MainService) ActiveUsersNotification(){
-	ticker := time.NewTicker(time.Duration( time.Second * 3))
+// ActiveFriendsNotification method for notifying users about their active friends 
+func(mainservice *MainService) ActiveFriendsNotification(){
+	ticker := time.NewTicker( time.Duration(  time.Second *12))
 	defer func(){
 		ticker.Stop()
 	}()
+
 	for{
 		select{
-		case <-ticker.C : {
-			mainservice.ActiveFriendsBroadcast();
+	case <-ticker.C:
+		{
+			mainservice.ActiveFriendsBroadcast()
 		}
-		}
-
+	}
 	}
 }
 
@@ -99,10 +102,9 @@ func (mainservice *MainService) RegisterClient(client *Client) {
 	// check the presense of the client in the client map and if the present
 	// create another websocket.Conn object in and Runn REad message on it.
 	var ip string
-	for ips  := range client.Conns{
-		ip= ips
+	for ips := range client.Conns {
+		ip = ips
 	}
-	print("Registering nigga  ")
 	for id, lclient := range mainservice.ClientMap {
 
 		if client.ID == id {
@@ -113,13 +115,13 @@ func (mainservice *MainService) RegisterClient(client *Client) {
 				for ips := range lclient.Conns {
 					// meaning the client with same ip present
 					if ip == ips {
-						return
+						delete(lclient.Conns, ip)
+						lclient.Conns[ip] = ccon
 					}
 				}
 				//  no ip is found simmilar to mine nigga am gonna
 				// join the conns listo
 				lclient.Conns[ip] = ccon
-				println("Running the Client Threads in the existing client ... ")
 				go lclient.ReadMessage(ip)
 				go lclient.WriteMessage(ip)
 				return
@@ -152,7 +154,7 @@ func (mainservice *MainService) RegisterClient(client *Client) {
 	println("Running the Client Threads  ")
 	go client.ReadMessage(ip)
 	go client.WriteMessage(ip)
-	
+
 }
 
 // UnregisterClient functio to un register the Client to the clientMap
@@ -219,10 +221,14 @@ func (mainservice *MainService) SeenConfirmIfClientExist(seencheck *entity.SeenC
 
 // SendEEMessage method message specificaly to one user
 func (mainservice *MainService) SendEEMessage(message entity.EEMBinary) {
+	print("Sending ....................................................................");
 	for id, client := range mainservice.ClientMap {
 		if id == message.UserID {
-			println("Last Sending to " , id )
-			client.Message <- message
+			println("Last Sending to ", id)
+			// client.Message <- message
+			for _, cl := range client.Conns {
+				cl.Message <- message.Data
+			}
 		}
 	}
 }
@@ -254,31 +260,38 @@ func (mainservice *MainService) DeleteUserClientConn(dccex *entity.ClientConnExi
 	}
 }
 
-// ActiveFriendsBroadcast method 
-func (mainservice *MainService)  ActiveFriendsBroadcast(){
-	for id , cl := range mainservice.ClientMap{
+// ActiveFriendsBroadcast method
+func (mainservice *MainService) ActiveFriendsBroadcast() {
+	for id, cl := range mainservice.ClientMap {
 		activeFriens := []string{id}
-		for  _ , alieID := range cl.User.MyAlies{
-			if(mainservice.ClientMap[alieID] != nil  ){
+		for _, conn := range cl.Conns {
+			if conn.Conn == nil {
+				mainservice.UnRegister <- cl
+				break
+			}
+		}
+		for _, alieID := range cl.User.MyAlies {
+
+			if mainservice.ClientMap[alieID] != nil {
 				activeFriens = append(activeFriens, alieID)
 			}
-		} 
+		}
 
-		if len(activeFriens)> 0 {
+		if len(activeFriens) > 0 {
 			activeInfo := entity.XActiveFriends{
-				UserID : id ,
-				Status : int(entity.ActiveFriends) ,
-				ActiveFriends: activeFriens, 
+				UserID:        id,
+				Status:        int(entity.ActiveFriends),
+				ActiveFriends: activeFriens,
 			}
-			if data  , era := json.Marshal(activeInfo); era == nil {
+			if data, era := json.Marshal(activeInfo); era == nil {
 				eemess := entity.EEMBinary{
-					Data: data,
-					UserID: activeInfo.UserID , 
+					Data:   data,
+					UserID: activeInfo.UserID,
 				}
 				// println(string(data))
-				mainservice.EEMBinary <- eemess 
+				mainservice.EEMBinary <- eemess
 			}
-			
+
 		}
 	}
 }

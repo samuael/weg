@@ -48,10 +48,12 @@ var sessionHandler *session.Cookiehandler
 
 // For Filtering and Preventing Directory Listening...
 func neuter(next http.Handler) http.Handler {
+	print("I got calles ... ")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/") {
 			return
 		}
+		print("Serving ... ")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -134,7 +136,9 @@ func main() {
 
 	mux := mux.NewRouter() //.StrictSlash(true)
 	fs := http.FileServer(http.Dir("../../web/templates/assets/"))
-	mux.Handle("/assets/", http.StripPrefix("/assets/", neuter(fs)))
+	http.Handle("/assets/", http.Handler(http.StripPrefix("/assets/", neuter(fs))))
+	http.Handle("/"  , mux )
+	
 
 	// waiting for chat ws or wss web socket services with a route /chat/ 
 	// this creates a web socket client object and create a continuously running loop for each 
@@ -146,8 +150,6 @@ func main() {
 	apiroute := mux.PathPrefix("/api/").Subrouter()
 
 	adminsRoute := apiroute.PathPrefix("/admin/").Subrouter()
-
-	// 
 	adminsRoute.HandleFunc("/new/"  , userhandler.Authenticated( adminhandler.CreateAdmin )).Methods(http.MethodPost)
 	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.DeleteAdmin )).Methods(http.MethodDelete)
 	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.UpdateAdmin )).Methods(http.MethodPut)
@@ -161,7 +163,9 @@ func main() {
 	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.DeleteIdeaByID)).Methods(http.MethodDelete)
 	apiroute.HandleFunc("/idea/like", userhandler.Authenticated(ideahand.LikeIdea)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/idea/dislike", userhandler.Authenticated(ideahand.DislikeIdea)).Methods(http.MethodGet)
-	apiroute.HandleFunc("/user/ideas/", userhandler.Authenticated(ideahand.GetIdeasByUserID)).Methods(http.MethodGet)
+	apiroute.HandleFunc("/user/ideas/", userhandler.Authenticated(ideahand.GetIdeasByUserID)).Methods(http.MethodGet)  // SearchIdeaByTitle
+	apiroute.HandleFunc("/idea/search/", ideahand.SearchIdeaByTitle).Methods(http.MethodGet)  // SearchIdeaByTitle
+	
 	
 	apiroute.HandleFunc("/user/new/", userhandler.RegisterClient).Methods(http.MethodPost)
 	apiroute.HandleFunc("/user/login/", userhandler.Login).Methods(http.MethodPost)
@@ -173,7 +177,8 @@ func main() {
 	apiroute.HandleFunc("/user/myprofile/", userhandler.Authenticated(userhandler.MyProfile)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/user/password/new/", userhandler.Authenticated(userhandler.ChangeUserPassword)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/user/search/", userhandler.Authenticated(userhandler.SearchUsers)).Methods(http.MethodGet) //
-	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.DeleteMyAccount)).Methods(http.MethodDelete) //
+	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.DeleteMyAccount)).Methods(http.MethodDelete) //  GetUserByID
+	apiroute.HandleFunc("/user/", userhandler.GetUserByID).Methods(http.MethodGet) //  
 
 
 	// GetGroupMembersList
@@ -199,8 +204,8 @@ func main() {
 	apiroute.HandleFunc("/user/message/", userhandler.Authenticated(inmshandler.DeleteMessage)).Methods(http.MethodDelete)
 	apiroute.HandleFunc("/user/message/seen/", userhandler.Authenticated(inmshandler.SetTheMessageSeen)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/group/message/new/", userhandler.Authenticated(gmhandler.SendGroupMessage)).Methods(http.MethodPost)
-
-	log.Fatal(http.ListenAndServe(":8080", mux))
+		
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 // DirectoryListener  representing

@@ -129,16 +129,28 @@ func (idearepo *IdeaRepo) UpdateIdea( idea *entity.Idea  ) (*entity.Idea  , erro
 	if oid  , era = primitive.ObjectIDFromHex(idea.ID); era != nil {
 		return idea  , era 
 	}
+
+	print("The Owner ID IS : " +idea.OwnerID)
 	updateRes , err := idearepo.DB.Collection(entity.IDEA).UpdateOne(context.TODO(),  bson.D{{"_id" , oid}}  , 
 	bson.D{
+		// bson.D{
+		// 	{"$set", bson.D{{"username", usr.Username},
+		// 	 {"email", usr.Email}, 
+		// 	 {"password", usr.Password}, 
+		// 	 {"imageurl", usr.Imageurl}, 
+		// 	 {"bio", usr.Bio}, 
+		// 	 {"mygroups"  , usr.MyGroups},
+		// 	 {"last_updated", usr.LastUpdated}, 
+		// 	 {"last_seen", usr.LastSeen}}},
+		// })
 		{"$set" , bson.D{
-			{ "likes" , idea.Likes  }, 
+			// { "likes" , idea.Likes  }, 
 			{  "imageurl" , idea.ImageURL } ,
 			{  "title" , idea.Title } ,
 			{  "description" , idea.Description } ,
-			{  "dislikes" , idea.Dislikes } ,
-			{  "likersid" , idea.LikersID } ,
-			{  "dislikersid" , idea.Dislikes } ,
+			// {  "dislikes" , idea.Dislikes } ,
+			// {  "likersid" , idea.LikersID } ,
+			// {  "dislikersid" , idea.Dislikes } ,
 			{  "ownerid" , idea.OwnerID } ,
 		}} , 
 		} )
@@ -149,3 +161,30 @@ func (idearepo *IdeaRepo) UpdateIdea( idea *entity.Idea  ) (*entity.Idea  , erro
 		return idea  , nil 
 }
 
+
+// SearchIdeaByTitle idea title search 
+func (idearepo *IdeaRepo)  SearchIdeaByTitle(title string )  ([]*entity.Idea , error){
+	ideas := []*entity.Idea{}
+	cursor  , era := idearepo.DB.Collection(entity.IDEA).Find(context.TODO(),  bson.M{ "$text": bson.D{{"$search" , title } } })
+	if era != nil {
+		fmt.Println(era.Error())
+		return ideas , era 
+	}
+	tempoIdeas := map[string]*entity.Idea{} 
+	for cursor.Next(context.TODO()) {
+		usr := &entity.Idea{}
+		cursor.Decode(usr)
+		if usr.ID != "" {
+			tempoIdeas[usr.ID] = usr
+		}
+	}
+	if len(tempoIdeas) > 0 {
+		for _ , val := range tempoIdeas {
+			ideas = append(ideas  , val )
+		}
+	}
+	if len( ideas) ==0 {
+		return ideas , errors.New("No Record Found ")
+	}
+	return ideas  , nil 
+}

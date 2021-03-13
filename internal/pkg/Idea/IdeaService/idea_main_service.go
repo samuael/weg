@@ -77,3 +77,12 @@ func (ideaser *IdeaService )  UpdateIdea( idea *entity.Idea  ) *entity.Idea {
 // 	} 
 // 	return ideas
 // }
+// SearchIdeaByTitle (title string )  []*entity.Idea
+func (ideaser  *IdeaService)  SearchIdeaByTitle(title string )  []*entity.Idea {
+	ideas , era := ideaser.IdeaRepo.SearchIdeaByTitle(title)
+	if era != nil {
+		era.Error()
+		return nil 
+	}
+	return ideas 
+}

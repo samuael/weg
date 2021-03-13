@@ -192,18 +192,16 @@ func (inms *IndividualMessageHandler) SetTheMessageSeen(response http.ResponseWr
 	session := inms.Session.GetSession(request)
 
 	in := &struct {
-		Status int              `json:"status"`
+		Status int                 `json:"status"`
 		Body   *entity.MessageSeen `json:"body"`
 	}{}
 	jdec := json.NewDecoder(request.Body)
 	decError := jdec.Decode(in)
 
-
-	if (in.Status != entity.MsgSeen) || (in.Body.FriendID == "")  {
+	if (in.Status != entity.MsgSeen) || (in.Body.FriendID == "") {
 		fmt.Println(" Invalid Input Nigga ...  ")
 		return
 	}
-
 
 	if decError != nil || in.Body.MessageNumber == 0 || in.Body.FriendID == "" {
 		fmt.Println(" Invalid Input Decode Error ...  ")
@@ -231,13 +229,69 @@ func (inms *IndividualMessageHandler) SetTheMessageSeen(response http.ResponseWr
 
 }
 
+// DeleteMessage individual message deletion
+// Input variables
+//   ?friend_id='something'&message_no=''thisisit
+func (inms *IndividualMessageHandler) DeleteMessage(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json; charset")
+	messageNo := request.FormValue("message_no")
+	alieid := request.FormValue("friend_id")
+	session := inms.Session.GetSession(request)
+	response.Header().Set("Content-Type", "application/json")
+	res := &struct {
+		Success   bool   `json:"success"`
+		Message   string `json:"message"`
+		FriendID  string `json:"friend_id"`
+		MessageNo int    `json:"message_no"`
+	}{
+		Success: false,
+	}
+	if session == nil {
+		response.Write([]byte(" UnAuthorized User "))
+		return
+	}
+	messageNumber, er := strconv.Atoi(messageNo)
+	res.MessageNo = messageNumber
+	res.FriendID = alieid
+	if er != nil || messageNumber <= 0 || alieid == "" {
+		res.Message = "Invalid Input please Try Again "
+		response.Write(Helper.MarshalThis(res))
+		return
+	}
+	alies := inms.AlieSer.GetAlies(alieid, session.UserID)
+	if alies == nil {
+		res.Message = " No Message Found "
+		response.Write(Helper.MarshalThis(res))
+		return
+	}
+	alies.Messages = func() []*entity.Message {
+		var messages = []*entity.Message{}
+		for _, mess := range alies.Messages {
+			if mess.MessageNumber != messageNumber {
+				messages = append(messages, mess)
+			}
+		}
+		return messages
+	}()
 
-// SeenConfirmMessage method for trial saving  the seen_confirmed service 
-// this function is later to be implemented by websocket servic 
+	alies = inms.AlieSer.UpdateAlies(alies)
+
+	if alies != nil {
+		res.Success = true
+		res.Message = "Succesfuly Deleted Message Number " + strconv.Itoa(messageNumber)
+		response.Write(Helper.MarshalThis(res))
+		return
+	}
+	res.Success = false
+	res.Message = " Internal Server ERROR  "
+	response.WriteHeader(http.StatusInternalServerError)
+	response.Write(Helper.MarshalThis(res))
+}
+
+// SeenConfirmMessage method for trial saving  the seen_confirmed service
+// this function is later to be implemented by websocket servic
 // --- this is only for trying the Seen Confirmed Service ----
 // INPUT : JSON
-//   
-// OUTPUT : JSON 
-//  
-
-
+//
+// OUTPUT : JSON
+//

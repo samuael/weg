@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
+	// "time"
 
 	// "fmt"
 	"log"
@@ -17,7 +17,6 @@ import (
 func main() {
 	initialize()
 }
-
 // var student *entity.Student
 
 func initialize() {
@@ -25,9 +24,7 @@ func initialize() {
 	// autoMigrate()
 	// PopulateDataBase()
 }
-
 var dbs *gorm.DB
-
 func autoMigrate() {
 	dbs, erro := db.InitializPostgres()
 	if erro != nil {
@@ -54,10 +51,10 @@ func autoMigrateToMongo() {
 	// db.Collection(entity.USER).Crea
 	collection.InsertOne(context.TODO()  , entity.Admin{
 		// ID : "" , 
-		Username : "samuael" , 
-		 Role:"samuaelfirst"  ,
-		Imageurl: "img/sami.jpg",
-		Time: time.Now(),
+		// Username : "samuael" , 
+		//  Role:"samuaelfirst"  ,
+		// Imageurl: "img/sami.jpg",
+		// Time: time.Now(),
 	})
 	// admino := []*entity.Admin{}
 
@@ -83,7 +80,7 @@ func autoMigrateToMongo() {
 	for cursor.Next(context.TODO()) {
 		ad := &entity.Admin{}
 		cursor.Decode(ad)
-		fmt.Println(ad.ID , ad.Username  , ad.Imageurl , ad.Time )
+		// fmt.Println(ad.ID , ad.Username  , ad.Imageurl , ad.Time )
 	}
 }
 

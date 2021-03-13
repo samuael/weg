@@ -31,8 +31,8 @@ type UserHandler struct {
 
 // NewUserHandler function returning client handler single client
 func NewUserHandler(
-	session *session.Cookiehandler, 
-	cs User.UserService, 
+	session *session.Cookiehandler,
+	cs User.UserService,
 	clientService *service.ClientService) *UserHandler {
 	return &UserHandler{
 		SessionHandler: session,
@@ -206,8 +206,8 @@ func (userh *UserHandler) UpdateUserProfile(response http.ResponseWriter, reques
 		// The message is succesful and now i am going to broadcast
 		// the change to all Alies of   profile owner.
 		userh.ClientService.Message <- &entity.AlieProfile{
-			Status: entity.MsgAlieProfileChange,
-			Body: *user,
+			Status:   entity.MsgAlieProfileChange,
+			Body:     *user,
 			SenderID: user.ID,
 		}
 
@@ -306,6 +306,42 @@ func GetSetLang(userh DHandler, response http.ResponseWriter, request *http.Requ
 	return lang
 }
 
+// DeleteMyAccount method to delete your account
+// Method DELETE
+func (userh *UserHandler) DeleteMyAccount(response http.ResponseWriter, request *http.Request) {
+	session := userh.SessionHandler.GetSession(request)
+	print("\n\n\n\n\nSome thing \n\n\n\n\n")
+	response.Header().Set("Content-Type", "application/json")
+	res := &struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}{
+		Success: false,
+	}
+	if session == nil {
+		return
+	}
+	var userid string
+	if session.Role == entity.ADMIN {
+		userid = request.FormValue("user_id")
+	} else {
+		userid = session.UserID
+	}
+	success := userh.UserSer.DeleteUserByID(userid)
+	if success {
+		if session.Role != entity.ADMIN {
+			userh.SessionHandler.DeleteSession(response, request)
+		}
+		res.Success = true
+		res.Message = "The Account is Succesfuly Deleted "
+		response.Write(Helper.MarshalThis(res))
+		return
+	}
+	res.Success = false
+	res.Message = "Can't Delete Your Account"
+	response.Write(Helper.MarshalThis(res))
+}
+
 // Login api Login function
 // METHOD POST
 // INPUT JSON    {
@@ -402,6 +438,8 @@ func (userh *UserHandler) Logout(response http.ResponseWriter, request *http.Req
 // Variable image :
 // INPUT >> Content-Type : application/x-www-form-urlencoded
 func (userh *UserHandler) UploadProfilePic(response http.ResponseWriter, request *http.Request) {
+
+	print("Image Is Getting In ")
 	response.Header().Set("Content-Type", "application/json")
 	lang := GetSetLang(userh, response, request)
 	res := struct {
@@ -472,11 +510,11 @@ func (userh *UserHandler) UploadProfilePic(response http.ResponseWriter, request
 	// The message is succesful and now i am going to broadcast
 	// the change to all Alies of   profile owner.
 	userh.ClientService.Message <- &entity.AlieProfile{
-		Status: entity.MsgAlieProfileChange,
-		Body: *user,
+		Status:   entity.MsgAlieProfileChange,
+		Body:     *user,
 		SenderID: user.ID,
 	}
-	
+
 	res.Success = true
 	response.WriteHeader(http.StatusOK)
 	res.Message = translation.Translate(lang, "Succesfully Registered ")
@@ -539,63 +577,94 @@ func (userh *UserHandler) Authenticated(next http.HandlerFunc) http.HandlerFunc 
 	})
 }
 
-
-// MyProfile returning the profile of the user by reading the Sessio 
-func (userh *UserHandler )  MyProfile(response http.ResponseWriter  , request *http.Request ) {
+// MyProfile returning the profile of the user by reading the Sessio
+func (userh *UserHandler) MyProfile(response http.ResponseWriter, request *http.Request) {
 	session := userh.SessionHandler.GetSession(request)
-	lang := GetSetLang(userh , response , request )
-	response.Header().Set("Content-Type", "application/json" )
-	res := &struct{
-		Success bool `json:"success"`
-		Message string `json:"message"`
-		User *entity.User  `json:"user"`
+	lang := GetSetLang(userh, response, request)
+	response.Header().Set("Content-Type", "application/json")
+	res := &struct {
+		Success bool         `json:"success"`
+		Message string       `json:"message"`
+		User    *entity.User `json:"user"`
 	}{
-		Success : false  , 
-		Message : translation.Translate(lang , "UnAuthorized User ") , 
-		User : nil  , 
+		Success: false,
+		Message: translation.Translate(lang, "UnAuthorized User "),
+		User:    nil,
 	}
 	if session == nil {
 		response.Write(Helper.MarshalThis(res))
-		return 
+		return
 	}
 	user := userh.UserSer.GetUserByID(session.UserID)
 	if user == nil {
-		res.Message= translation.Translate(lang , "Record Not Found ")
+		res.Message = translation.Translate(lang, "Record Not Found ")
 		response.Write(Helper.MarshalThis(res))
-		return 
+		return
 	}
-	res.Success = true 
-	res.Message = fmt.Sprintf(translation.Translate(lang  , " Welcome %s ") , user.Username )
-	res.User = user 
+	res.Success = true
+	res.Message = fmt.Sprintf(translation.Translate(lang, " Welcome %s "), user.Username)
+	res.User = user
 	response.Write(Helper.MarshalThis(res))
 }
 
-// SearchUsers using name 
-func (userh *UserHandler )  SearchUsers(response http.ResponseWriter  , request *http.Request ) {
-	// getting the username and validation of the search query string 
-	lang := GetSetLang(userh , response  , request )
+// SearchUsers using name
+func (userh *UserHandler) SearchUsers(response http.ResponseWriter, request *http.Request) {
+	// getting the username and validation of the search query string
+	lang := GetSetLang(userh, response, request)
 	response.Header().Set("Content-Type", "application/json")
-	res := &struct{
-		Success bool `json:"success"`
-		Message string `json:"message"`
-		Users []*entity.User `json:"users"`
+	res := &struct {
+		Success bool           `json:"success"`
+		Message string         `json:"message"`
+		Users   []*entity.User `json:"users"`
 	}{
-		Success : false , 
-		Message : translation.Translate(lang , "No Record Found "),
+		Success: false,
+		Message: translation.Translate(lang, "No Record Found "),
 	}
 	username := request.FormValue("username")
 	if username == "" {
 		response.Write(Helper.MarshalThis(res))
-		return 
+		return
 	}
 	users := userh.UserSer.SearchUsers(username)
 	if users == nil {
-		res.Message= translation.Translate(lang   , " No Search result found ")
+		res.Message = translation.Translate(lang, " No Search result found ")
 		response.Write(Helper.MarshalThis(res))
-		return 
+		return
 	}
 	res.Success = true
-	res.Message = fmt.Sprintf(translation.Translate( lang , "Succesfult %d record" )  , len(users))
+	res.Message = fmt.Sprintf(translation.Translate(lang, "Succesfult %d record"), len(users))
 	res.Users = users
 	response.Write(Helper.MarshalThis(res))
+}
+
+// GetUserByID method to get
+// METHOD   :   GET
+//
+func (userh *UserHandler) GetUserByID(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+	res := &struct {
+		Success bool         `json:"success"`
+		Message string       `json:"message"`
+		User    *entity.User `json:"user"`
+	}{
+		Success: false,
+	}
+	if userid := request.FormValue("userid"); userid != "" {
+		user := userh.UserSer.GetUserByID(userid)
+		if user == nil {
+			res.Message = " Record Not Found "
+			response.Write(Helper.MarshalThis(res))
+			return
+		}
+		res.Message = " Succesfuly Fetched User  "
+		res.User = user
+		res.Success = true
+		response.Write(Helper.MarshalThis(res))
+		return
+	} else {
+		res.Message = " Invalid Input "
+		response.Write(Helper.MarshalThis(res))
+		return
+	}
+
 }

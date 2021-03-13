@@ -8,7 +8,7 @@ import (
 	"github.com/samuael/Project/Weg/pkg/Helper"
 )
 
-func main(){
+func main() {
 	group := entity.Group{}
 	user := entity.User{}
 	message := entity.Message{}

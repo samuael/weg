@@ -10,5 +10,6 @@ type IdeaRepo interface {
 	GetMyIdeas( userid string    )([]*entity.Idea  , error )
 	DeleteIdeaByID(id string ) error  
 	UpdateIdea( idea *entity.Idea  ) (*entity.Idea  , error)
+	SearchIdeaByTitle(title string )  ([]*entity.Idea , error)
 	// GetIdeasByUserID(userid string ) ([]*entity.Idea , error)
 }

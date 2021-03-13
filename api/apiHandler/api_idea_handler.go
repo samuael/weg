@@ -356,7 +356,7 @@ func (ideah	*IdeaHandler) DeleteIdeaByID(response http.ResponseWriter  , request
 		response.Write(Helper.MarshalThis(res))
 		return 
 	}
-	if idea.OwnerID != session.UserID{
+	if !(idea.OwnerID == session.UserID  || session.Role == entity.ADMIN) {
 		res.Message= translation.Translate(lang , "You Are Not Authorized To Perform this Action !")
 		response.Write(Helper.MarshalThis(res))
 		return 
@@ -582,6 +582,7 @@ func (ideah *IdeaHandler ) UpdateIdea(response http.ResponseWriter  , request *h
 	}{
 		Success : false  , 
 		Message : translation.Translate(lang , "Invalid Input ..") , 
+		Idea : &entity.Idea{} , 
 	}
 	session := ideah.Session.GetSession(request)
 	if session == nil {
@@ -594,10 +595,11 @@ func (ideah *IdeaHandler ) UpdateIdea(response http.ResponseWriter  , request *h
 	if (decErro != nil) || (res.Idea == nil) {
 		// Error Happened whle Decoding nigga 
 		// so  , I am Gonna return Invalid Input Error 
+		print(decErro);
 		response.Write(Helper.MarshalThis(res))
 		return 
 	}
-	if res.Idea.ID== "" {
+	if res.Idea.ID == "" {
 		res.Message= translation.Translate(lang , "Invalid Value Idea ID must be specified !")
 		response.Write(Helper.MarshalThis(res))
 		return 
@@ -610,6 +612,7 @@ func (ideah *IdeaHandler ) UpdateIdea(response http.ResponseWriter  , request *h
 	}
 	if idea.OwnerID != session.UserID {
 		res.Message = translation.Translate(lang  , "You Are Not Authorized o change the Idea !")
+
 		response.Write(Helper.MarshalThis(res))
 		return 
 	}
@@ -624,6 +627,7 @@ func (ideah *IdeaHandler ) UpdateIdea(response http.ResponseWriter  , request *h
 		return idea.Description
 		}
 		return res.Idea.Description}()
+
 		idea = ideah.IdeaSer.UpdateIdea(idea)
 		if idea == nil {
 			res.Message = translation.Translate(lang  ,"Internal Server Error ")
@@ -702,3 +706,36 @@ func (ideah *IdeaHandler)   GetIdeasByUserID(response http.ResponseWriter  , req
 	res.Ideas = ideas
 	response.Write(Helper.MarshalThis(res))
 }
+
+
+// SearchIdeaByTitle  a method to search an ID usign the tile  
+// method JSON 
+// INPUT  title 
+func (ideah *IdeaHandler)   SearchIdeaByTitle(  response http.ResponseWriter  , request *http.Request ){
+	response.Header().Set("Content-Type", "application/json")
+	res := &struct{
+		Success bool `json:"success"`
+		Message string `json:"message"`
+		Ideas []*entity.Idea `json:"ideas"`
+	}{
+		Success : false  ,
+		Message : "No Record Found" ,  
+	}
+	title := request.FormValue("title")
+	if (title ==""){
+		response.Write(Helper.MarshalThis(res))
+		return 
+	}
+	ideas := ideah.IdeaSer.SearchIdeaByTitle(title)
+	if ideas == nil  || len(ideas)==0 {
+		res.Ideas=[]*entity.Idea{}
+		response.Write(Helper.MarshalThis(res))
+		return 
+	}
+	res.Message = fmt.Sprintf("  Succesfuly fetched %d Ideas " , len(ideas)) 
+	res.Ideas = ideas
+	res.Success = true
+	response.Write(Helper.MarshalThis(res))
+}
+
+// SearchIdeaByTitle 

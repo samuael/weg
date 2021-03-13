@@ -140,8 +140,10 @@ func (clientservice *ClientService) ServeHTTP(response http.ResponseWriter, requ
 		return
 	}
 	client := &Client{
-		ClientService:  clientservice,
-		Conns:          map[string]*entity.ClientConn{GetClientIPFromRequest(request): &entity.ClientConn{Conn: conn, IP: GetClientIPFromRequest(request)}},
+		ClientService: clientservice,
+		Conns: map[string]*entity.ClientConn{
+			GetClientIPFromRequest(request): &entity.ClientConn{Conn: conn, Message: make(chan []byte), IP: GetClientIPFromRequest(request)},
+		},
 		ID:             user.ID,
 		Message:        make(chan entity.EEMBinary),
 		SessionHandler: clientservice.SessionHandler,
