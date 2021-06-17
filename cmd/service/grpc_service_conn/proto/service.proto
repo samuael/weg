@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package proto;
+
+message EEBinary{
+    string userID =1;
+    string data = 2;
+}
+
+message EEResponse{
+    bool success =1;
+}
+
+
+service MessageService {
+    rpc HandleEEMessage(EEBinary) returns (EEResponse);
+}

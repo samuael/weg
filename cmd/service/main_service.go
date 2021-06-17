@@ -3,38 +3,49 @@ package service
 import (
 	"encoding/json"
 	"time"
+
 	// "time"
 
+	"github.com/samuael/Project/Weg/cmd/service/grpc_service_conn/client"
 	"github.com/samuael/Project/Weg/internal/pkg/entity"
 )
 
 // MainService struct representing the main service class and
 // having continuously running "run()"  method as a handler of messages
 type MainService struct {
-	ClientMap map[string]*Client
-	GroupMap  map[string]*WSGroup
-	EEMBinary chan entity.EEMBinary
-	GMMBinary chan entity.GMMBinary
+	ClientMap    map[string]*Client
+	GroupMap     map[string]*WSGroup
+	EEMBinary    chan entity.EEMBinary
+	ADDEEMBinary chan entity.EEMBinary
+	GMMBinary    chan entity.GMMBinary
 	// GMMessage                     chan entity.GMMessage
 	Register                      chan *Client
 	UnRegister                    chan *Client
 	SeenConfirmIfClientExistCheck chan *entity.SeenConfirmIfClientExist
 	// ClientConnExistance to handle deleting of ClientCOnn Object fromuser Conns List
 	DeleteClientConn chan *entity.ClientConnExistance
+	GrpcClient       *client.GrpcClient
 }
 
 // NewMainService  funciton craeting a MainServic instance
 func NewMainService() *MainService {
 	return &MainService{
-		ClientMap: map[string]*Client{},
-		GroupMap:  map[string]*WSGroup{},
-		EEMBinary: make(chan entity.EEMBinary),
-		GMMBinary: make(chan entity.GMMBinary),
+		ClientMap:    map[string]*Client{},
+		GroupMap:     map[string]*WSGroup{},
+		EEMBinary:    make(chan entity.EEMBinary),
+		ADDEEMBinary: make(chan entity.EEMBinary),
+		GMMBinary:    make(chan entity.GMMBinary),
 		// GMMessage:                     make(chan entity.GMMessage),
 		Register:                      make(chan *Client),
 		UnRegister:                    make(chan *Client),
 		SeenConfirmIfClientExistCheck: make(chan *entity.SeenConfirmIfClientExist),
 	}
+}
+
+// SetGrpcClient this method is to be used for setting the GRPC Client
+// which is used to broadcast the Message for the clients
+func (mainservice *MainService) SetGrpcHandler(client *client.GrpcClient) {
+	mainservice.GrpcClient = client
 }
 
 // Run method handling sending messages to clients and Coordinating the accessing of
@@ -45,9 +56,10 @@ func (mainservice *MainService) Run() {
 		close(mainservice.UnRegister)
 		close(mainservice.EEMBinary)
 		close(mainservice.GMMBinary)
+		close(mainservice.ADDEEMBinary)
 	}()
 
-	go mainservice.ActiveFriendsNotification();
+	go mainservice.ActiveFriendsNotification()
 	for {
 		select {
 
@@ -65,8 +77,21 @@ func (mainservice *MainService) Run() {
 			}
 		case message := <-mainservice.EEMBinary:
 			{
-				print("..............................This is called ............................");
+				sent_confirm := mainservice.SendEEMessage(message)
+				// if !sent_confirm {
+				// The Message is not sent so i have to send the Other Peer To send the Message
+				success := mainservice.GrpcClient.BroadcastEEMessage(message)
+				if success {
+					// println("The Message is sent to the Other Server ")
+					println(sent_confirm)
+				}
+				// }
+
+			}
+		case message := <-mainservice.ADDEEMBinary:
+			{
 				mainservice.SendEEMessage(message)
+
 			}
 		case gmessage := <-mainservice.GMMBinary:
 			{
@@ -76,24 +101,25 @@ func (mainservice *MainService) Run() {
 			{
 				mainservice.DeleteUserClientConn(deleteClientConn)
 			}
-		
-	}}
+
+		}
+	}
 }
 
-// ActiveFriendsNotification method for notifying users about their active friends 
-func(mainservice *MainService) ActiveFriendsNotification(){
-	ticker := time.NewTicker( time.Duration(  time.Second *12))
-	defer func(){
+// ActiveFriendsNotification method for notifying users about their active friends
+func (mainservice *MainService) ActiveFriendsNotification() {
+	ticker := time.NewTicker(time.Duration(time.Second * 12))
+	defer func() {
 		ticker.Stop()
 	}()
 
-	for{
-		select{
-	case <-ticker.C:
-		{
-			mainservice.ActiveFriendsBroadcast()
+	for {
+		select {
+		case <-ticker.C:
+			{
+				mainservice.ActiveFriendsBroadcast()
+			}
 		}
-	}
 	}
 }
 
@@ -151,7 +177,6 @@ func (mainservice *MainService) RegisterClient(client *Client) {
 		}
 	}
 	mainservice.ClientMap[client.ID] = client
-	println("Running the Client Threads  ")
 	go client.ReadMessage(ip)
 	go client.WriteMessage(ip)
 
@@ -220,17 +245,16 @@ func (mainservice *MainService) SeenConfirmIfClientExist(seencheck *entity.SeenC
 }
 
 // SendEEMessage method message specificaly to one user
-func (mainservice *MainService) SendEEMessage(message entity.EEMBinary) {
-	print("Sending ....................................................................");
+func (mainservice *MainService) SendEEMessage(message entity.EEMBinary) bool {
 	for id, client := range mainservice.ClientMap {
 		if id == message.UserID {
-			println("Last Sending to ", id)
-			// client.Message <- message
 			for _, cl := range client.Conns {
 				cl.Message <- message.Data
 			}
+			return true
 		}
 	}
+	return false
 }
 
 // SendGMessage method to send group broadcast message to group
@@ -288,8 +312,7 @@ func (mainservice *MainService) ActiveFriendsBroadcast() {
 					Data:   data,
 					UserID: activeInfo.UserID,
 				}
-				// println(string(data))
-				mainservice.EEMBinary <- eemess
+				mainservice.ADDEEMBinary <- eemess
 			}
 
 		}

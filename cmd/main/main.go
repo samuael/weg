@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -17,6 +18,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/samuael/Project/Weg/api/apiHandler"
 	"github.com/samuael/Project/Weg/cmd/service"
+	"github.com/samuael/Project/Weg/cmd/service/grpc_service_conn/client"
+	"github.com/samuael/Project/Weg/cmd/service/grpc_service_conn/server"
 	"github.com/samuael/Project/Weg/internal/pkg/Admin/AdminRepo"
 	"github.com/samuael/Project/Weg/internal/pkg/Admin/AdminService"
 	"github.com/samuael/Project/Weg/internal/pkg/Alie/AlieRepo"
@@ -25,8 +28,11 @@ import (
 	"github.com/samuael/Project/Weg/internal/pkg/Group/GroupService"
 	"github.com/samuael/Project/Weg/internal/pkg/Idea/IdeaRepo"
 	"github.com/samuael/Project/Weg/internal/pkg/Idea/IdeaService"
+	"github.com/samuael/Project/Weg/internal/pkg/entity"
+	"google.golang.org/grpc"
 
 	// "github.com/samuael/Project/Weg/internal/pkg/Message"
+	pb "github.com/samuael/Project/Weg/cmd/service/grpc_service_conn/proto"
 	"github.com/samuael/Project/Weg/internal/pkg/Message/MessageRepo"
 	"github.com/samuael/Project/Weg/internal/pkg/Message/MessageService"
 	session "github.com/samuael/Project/Weg/internal/pkg/Session"
@@ -84,9 +90,6 @@ func main() {
 	defer db.Client().Disconnect(context.TODO())
 	sessionHandler = session.NewCookieHandler()
 
-
-
-
 	alierepo := AlieRepo.NewAlieRepo(db)
 	alieSer := AlieService.NewAlieService(alierepo)
 
@@ -100,36 +103,46 @@ func main() {
 
 	aliehandler := apiHandler.NewAliesHandler(sessionHandler, alieSer, userser)
 
-
 	idearepo := IdeaRepo.NewIdeaRepo(db)
-	ideaser := IdeaService.NewIdeaService( idearepo  )
-	ideahand := apiHandler.NewIdeaHandler(sessionHandler  , ideaser  , userser)
+	ideaser := IdeaService.NewIdeaService(idearepo)
+	ideahand := apiHandler.NewIdeaHandler(sessionHandler, ideaser, userser)
 
-	// adminRelated instances 
+	// adminRelated instances
 	adminrepo := AdminRepo.NewAdminRepo(db)
 	adminser := AdminService.NewAdminService(adminrepo)
-	adminhandler := apiHandler.NewAdminHandler(sessionHandler ,adminser , userser)
-
-
+	adminhandler := apiHandler.NewAdminHandler(sessionHandler, adminser, userser)
 
 	// Continuously Running service objects instantiation
-
 
 	mainservice := service.NewMainService()
 	groupservice := service.NewGroupService()
 	clientservice := service.NewClientService(
-		mainservice , 
-		messageSer , 
-		groupservice , 
-		userser  , 
-		gservice, 
-		alieSer , 
+		mainservice,
+		messageSer,
+		groupservice,
+		userser,
+		gservice,
+		alieSer,
 		sessionHandler)
-		go mainservice.Run()
-		go clientservice.Run()
+
+	//  Registering the Grpc handler
+	grpcHandler := server.NewGrpcEEServer(mainservice)
+	grpcClient := client.NewGrpcClient()
+	// server instantiated at the default port of 8070
+
+	mainservice.SetGrpcHandler(grpcClient)
+
+	// Instantiating the server
+
+	// Instantiating the GRPC sserver
+	go grpcClient.UpdatePeerServers()
+	go InstantiateGrpcServer(grpcHandler)
+
+	go mainservice.Run()
+	go clientservice.Run()
 	// -----------------end --------------------
-	
-	userhandler := apiHandler.NewUserHandler(sessionHandler, userser ,clientservice )
+
+	userhandler := apiHandler.NewUserHandler(sessionHandler, userser, clientservice)
 	grouphandler := apiHandler.NewGroupHandler(sessionHandler, gservice, userser)
 	inmshandler := apiHandler.NewIndvMessageHandler(sessionHandler, messageSer, userser, alieSer)
 	gmhandler := apiHandler.NewGroupMessageHandler(gservice, userser, sessionHandler, messageSer)
@@ -137,23 +150,22 @@ func main() {
 	mux := mux.NewRouter() //.StrictSlash(true)
 	fs := http.FileServer(http.Dir("../../web/templates/assets/"))
 	http.Handle("/assets/", http.Handler(http.StripPrefix("/assets/", neuter(fs))))
-	http.Handle("/"  , mux )
-	
+	http.Handle("/", mux)
 
-	// waiting for chat ws or wss web socket services with a route /chat/ 
-	// this creates a web socket client object and create a continuously running loop for each 
-	// client connection ? Not User - but , clients of user 
-	// meaning One User may have multiple clients From Mobile , Browser etc and he/she can use 
+	// waiting for chat ws or wss web socket services with a route /chat/
+	// this creates a web socket client object and create a continuously running loop for each
+	// client connection ? Not User - but , clients of user
+	// meaning One User may have multiple clients From Mobile , Browser etc and he/she can use
 	// multiple device on one account.
-	mux.Handle("/chat/"  , clientservice)
+	mux.Handle("/chat/", clientservice)
 
 	apiroute := mux.PathPrefix("/api/").Subrouter()
 
 	adminsRoute := apiroute.PathPrefix("/admin/").Subrouter()
-	adminsRoute.HandleFunc("/new/"  , userhandler.Authenticated( adminhandler.CreateAdmin )).Methods(http.MethodPost)
-	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.DeleteAdmin )).Methods(http.MethodDelete)
-	adminsRoute.HandleFunc("/"  , userhandler.Authenticated( adminhandler.UpdateAdmin )).Methods(http.MethodPut)
-	adminsRoute.HandleFunc("/login/"  ,  adminhandler.AdminLogin ).Methods(http.MethodPost)
+	adminsRoute.HandleFunc("/new/", userhandler.Authenticated(adminhandler.CreateAdmin)).Methods(http.MethodPost)
+	adminsRoute.HandleFunc("/", userhandler.Authenticated(adminhandler.DeleteAdmin)).Methods(http.MethodDelete)
+	adminsRoute.HandleFunc("/", userhandler.Authenticated(adminhandler.UpdateAdmin)).Methods(http.MethodPut)
+	adminsRoute.HandleFunc("/login/", adminhandler.AdminLogin).Methods(http.MethodPost)
 	// CreateIdea  ownerid    DeleteIdeaByID DislikeIdea  GetIdeasByUserID CreateIdeaJSONInput
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdea)).Methods(http.MethodPost)
 	apiroute.HandleFunc("/idea/new/", userhandler.Authenticated(ideahand.CreateIdeaJSONInput)).Methods(http.MethodPut)
@@ -163,10 +175,9 @@ func main() {
 	apiroute.HandleFunc("/idea/", userhandler.Authenticated(ideahand.DeleteIdeaByID)).Methods(http.MethodDelete)
 	apiroute.HandleFunc("/idea/like", userhandler.Authenticated(ideahand.LikeIdea)).Methods(http.MethodGet)
 	apiroute.HandleFunc("/idea/dislike", userhandler.Authenticated(ideahand.DislikeIdea)).Methods(http.MethodGet)
-	apiroute.HandleFunc("/user/ideas/", userhandler.Authenticated(ideahand.GetIdeasByUserID)).Methods(http.MethodGet)  // SearchIdeaByTitle
-	apiroute.HandleFunc("/idea/search/", ideahand.SearchIdeaByTitle).Methods(http.MethodGet)  // SearchIdeaByTitle
-	
-	
+	apiroute.HandleFunc("/user/ideas/", userhandler.Authenticated(ideahand.GetIdeasByUserID)).Methods(http.MethodGet) // SearchIdeaByTitle
+	apiroute.HandleFunc("/idea/search/", ideahand.SearchIdeaByTitle).Methods(http.MethodGet)                          // SearchIdeaByTitle
+
 	apiroute.HandleFunc("/user/new/", userhandler.RegisterClient).Methods(http.MethodPost)
 	apiroute.HandleFunc("/user/login/", userhandler.Login).Methods(http.MethodPost)
 
@@ -178,8 +189,7 @@ func main() {
 	apiroute.HandleFunc("/user/password/new/", userhandler.Authenticated(userhandler.ChangeUserPassword)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/user/search/", userhandler.Authenticated(userhandler.SearchUsers)).Methods(http.MethodGet) //
 	apiroute.HandleFunc("/user/", userhandler.Authenticated(userhandler.DeleteMyAccount)).Methods(http.MethodDelete) //  GetUserByID
-	apiroute.HandleFunc("/user/", userhandler.GetUserByID).Methods(http.MethodGet) //  
-
+	apiroute.HandleFunc("/user/", userhandler.GetUserByID).Methods(http.MethodGet)                                   //
 
 	// GetGroupMembersList
 	apiroute.HandleFunc("/group/new/", userhandler.Authenticated(grouphandler.CreateGroup)).Methods(http.MethodPost)
@@ -204,8 +214,21 @@ func main() {
 	apiroute.HandleFunc("/user/message/", userhandler.Authenticated(inmshandler.DeleteMessage)).Methods(http.MethodDelete)
 	apiroute.HandleFunc("/user/message/seen/", userhandler.Authenticated(inmshandler.SetTheMessageSeen)).Methods(http.MethodPut)
 	apiroute.HandleFunc("/group/message/new/", userhandler.Authenticated(gmhandler.SendGroupMessage)).Methods(http.MethodPost)
-		
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	log.Fatal(http.ListenAndServe(entity.SERVER_PORT, nil))
+}
+
+func InstantiateGrpcServer(serv *server.GrpcEEHandler) {
+	lis, err := net.Listen("tcp", entity.GRPC_PORT)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterMessageServiceServer(s, serv)
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
 
 // DirectoryListener  representing

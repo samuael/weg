@@ -55,7 +55,7 @@ const (
 func (client *Client) ReadMessage(key string) {
 	defer func() {
 		client.ClientService.MainService.UnRegister<- client
-		println("I Am Leaving nigga")
+		// println("I Am Leaving nigga")
 		(client.Conns[key]).Conn.Close()
 		//  close(client.Message)
 		client.MainService.DeleteClientConn <- &entity.ClientConnExistance{
@@ -69,7 +69,7 @@ func (client *Client) ReadMessage(key string) {
 	// client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait))
 	client.Conns[key].Conn.SetPongHandler(func(string) error { /*client.Conns[key].Conn.SetReadDeadline(time.Now().Add(pongWait)); */return nil })
 	for {
-		print("Im running")
+		// print("Im running")
 		message := &entity.InMess{}
 		err := client.Conns[key].Conn.ReadJSON(message)
 		if err != nil {
@@ -77,16 +77,16 @@ func (client *Client) ReadMessage(key string) {
 				log.Printf("error: %v", err)
 			}
 			// websocket.
-			println(err.Error())
+			// println(err.Error())
 			break
 		}
-		println(string(Helper.MarshalThis(message)))
+		// println(string(Helper.MarshalThis(message)))
 		if message == nil {
 			continue
 		}
 		// Brodcast the message
 		if message.GetStatus() <= 0 || message.GetStatus() > 13 {
-			println("Not A Valid Message ...  ")
+			// println("Not A Valid Message ...  ")
 			continue
 		}
 
@@ -103,7 +103,7 @@ func (client *Client) ReadMessage(key string) {
 		case entity.MsgSeen:
 			{
 
-				print(" Incomming Seen message ................." , body);
+				// print(" Incomming Seen message ................." , body);
 				if body.(*entity.SeenMessage).Body.SenderID == "" {
 					body = nil
 					break
@@ -173,7 +173,7 @@ func (client *Client) ReadMessage(key string) {
 				}
 				// sending the message if the message in not nil
 				if messaj != nil {
-					println(" Seending the Message to the Clients \n\n\n")
+					// println(" Seending the Message to the Clients \n\n\n")
 					messaj.SenderID = client.ID
 					client.ClientService.Message <- messaj
 				}
@@ -205,7 +205,7 @@ func (client *Client) Run() {
 			}
 		case <-ticker.C:
 			{
-				print("I Am Reading ... ")
+				// print("I Am Reading ... ")
 				if client == nil {
 					return
 				}
@@ -223,11 +223,11 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 	if session == nil {
 		// res.Message= translation.Translate(lang  , " UnAuthorized User ")
 		// response.Write(  Helper.MarshalThis(res) )
-		fmt.Println("UnAuthorized User ....")
+		// fmt.Println("UnAuthorized User ....")
 		return nil, nil
 	}
 	if (message.Status != entity.MsgIndividualTxt) || (message.Body.ReceiverID == "") || (message.Body.Text == "") {
-		fmt.Println("No thmessageg Is Sentoooo nigga ")
+		// fmt.Println("No thmessageg Is Sentoooo nigga ")
 		return nil, nil
 	}
 	message.Body.SenderID = session.UserID
@@ -237,20 +237,20 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 	result := client.AlieSer.AreTheyAlies(message.Body.SenderID, message.Body.ReceiverID)
 	var alies *entity.Alie
 	if !result {
-		fmt.Println("They Are Not Alies and I Am Gonna Create Alies Table  ")
+		// fmt.Println("They Are Not Alies and I Am Gonna Create Alies Table  ")
 		alies = client.AlieSer.CreateAlieDocument(message.Body.SenderID, message.Body.ReceiverID)
 		if alies != nil {
-			fmt.Println(" Alie ID : ", alies.ID)
+			// fmt.Println(" Alie ID : ", alies.ID)
 
 		} else {
-			fmt.Println(" ALies Response Is Nil ")
+			// fmt.Println(" ALies Response Is Nil ")
 		}
 	}
 	if alies == nil {
 		alies = client.AlieSer.GetAlies(message.Body.SenderID, message.Body.ReceiverID)
 	}
 	if alies == nil {
-		fmt.Println("messageternal Server Error")
+		// fmt.Println("messageternal Server Error")
 		return nil, nil
 	}
 	message.Body.MessageNumber = len(alies.Messages) + 1
@@ -259,7 +259,7 @@ func (client *Client) SendAlieMessage(message *entity.EEMessage) (*entity.Alie, 
 
 	alies = client.AlieSer.UpdateAlies(alies)
 	if alies == nil {
-		fmt.Println(" internal Server ERROR alies update Error")
+		// fmt.Println(" internal Server ERROR alies update Error")
 		return nil, nil
 	}
 	return alies, message
@@ -275,14 +275,14 @@ func (client *Client) SetMessageSeen(message *entity.SeenMessage) *entity.SeenMe
 	}
 	friendExist := client.ClientService.UserSer.UserWithIDExist(message.Body.SenderID)
 	if !friendExist {
-		fmt.Println("No Friend By this ID Exist nigga ")
+		// fmt.Println("No Friend By this ID Exist nigga ")
 		return nil
 	}
 
 	// settmessageg the message seen
 	mess, success := client.MessageSer.SetMessageSeen(message.Body.SenderID, client.ID, message.Body.MessageNumber)
 	if !success {
-		fmt.Println(mess)
+		// fmt.Println(mess)
 		return nil
 	}
 	// telling the main service if the sender exist in the online list
@@ -318,10 +318,8 @@ func (client *Client) SetSeenMessageConfirmed(MyID, SenderID string, messNo int)
 	if client != nil {
 		success := client.MessageSer.SetSeenConfirmed(MyID, SenderID, messNo)
 		if success {
-			fmt.Println(" setting the message as seen was succesful")
 			return
 		}
-		fmt.Println(" setting the message as seen is not succesful")
 	}
 }
 
@@ -372,7 +370,6 @@ func (client *Client) WriteMessage(key string) {
 func (client *Client) FilterMessage(message  *entity.InMess )  entity.XMessage {
 	var body entity.XMessage
 	switch message.GetStatus() {
-
 	case entity.MsgSeen:
 		{
 			body = &entity.SeenMessage{
@@ -426,7 +423,7 @@ func (client *Client) FilterMessage(message  *entity.InMess )  entity.XMessage {
 		}
 	case entity.MsgIndividualTxt:
 		{
-			println("The Message Arrived Here")
+			// println("The Message Arrived Here")
 			body = &entity.EEMessage{
 				Status: message.GetStatus(),
 				Body: func() entity.Message {
